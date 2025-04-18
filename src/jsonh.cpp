@@ -1,7 +1,7 @@
+#include <godot_cpp/core/class_db.hpp>
+
 #include "jsonh.hpp"
 #include "jsonh_cpp/jsonh_cpp_amalgamated.hpp"
-
-#include <godot_cpp/core/class_db.hpp>
 
 using namespace godot;
 using namespace nlohmann;
