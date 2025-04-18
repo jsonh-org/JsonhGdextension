@@ -45,10 +45,25 @@ macos.double.debug = "./macos/libJsonhGdextension.macos.template_debug.double.dy
 macos.single.release = "./macos/libJsonhGdextension.macos.template_release.dylib"
 macos.double.release = "./macos/libJsonhGdextension.macos.template_debug.double.dylib"
 
-android.single.debug = "./android/libJsonhGdextension.android.template_debug.so"
-android.double.debug = "./android/libJsonhGdextension.android.template_debug.double.so"
-android.single.release = "./android/libJsonhGdextension.android.template_release.so"
-android.double.release = "./android/libJsonhGdextension.android.template_release.double.so"
+android.x86_64.single.debug = "./android/libJsonhGdextension.android.x86_64.template_debug.so"
+android.x86_64.double.debug = "./android/libJsonhGdextension.android.x86_64.template_debug.double.so"
+android.x86_64.single.release = "./android/libJsonhGdextension.android.x86_64.template_release.so"
+android.x86_64.double.release = "./android/libJsonhGdextension.android.x86_64.template_release.double.so"
+
+android.x86_32.single.debug = "./android/libJsonhGdextension.android.x86_32.template_debug.so"
+android.x86_32.double.debug = "./android/libJsonhGdextension.android.x86_32.template_debug.double.so"
+android.x86_32.single.release = "./android/libJsonhGdextension.android.x86_32.template_release.so"
+android.x86_32.double.release = "./android/libJsonhGdextension.android.x86_32.template_release.double.so"
+
+android.arm64.single.debug = "./android/libJsonhGdextension.android.arm64.template_debug.so"
+android.arm64.double.debug = "./android/libJsonhGdextension.android.arm64.template_debug.double.so"
+android.arm64.single.release = "./android/libJsonhGdextension.android.arm64.template_release.so"
+android.arm64.double.release = "./android/libJsonhGdextension.android.arm64.template_release.double.so"
+
+android.arm32.single.debug = "./android/libJsonhGdextension.android.arm32.template_debug.so"
+android.arm32.double.debug = "./android/libJsonhGdextension.android.arm32.template_debug.double.so"
+android.arm32.single.release = "./android/libJsonhGdextension.android.arm32.template_release.so"
+android.arm32.double.release = "./android/libJsonhGdextension.android.arm32.template_release.double.so"
 
 ios.arm64.single.debug = "./ios/libJsonhGdextension.ios.template_debug.arm64.dylib"
 ios.arm64.double.debug = "./ios/libJsonhGdextension.ios.template_debug.arm64.double.dylib"
