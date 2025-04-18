@@ -38,7 +38,7 @@ Run the following command to download godot-cpp:
 env = SConscript("godot-cpp/SConstruct", {"env": env, "customs": customs})
 
 # BEGIN EDIT
-# Add C++23 support
+# Add C++20 support
 if env.get("is_msvc", False):
     env.Append(CXXFLAGS=["/std:c++20"])
 else:
