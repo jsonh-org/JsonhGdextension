@@ -1,7 +1,5 @@
 extends Node
 
-@onready var label: Label = $Label
-
 func _ready() -> void:
 	var jsonh:String = "[hello, world]"
 	
