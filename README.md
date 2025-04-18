@@ -1,4 +1,4 @@
-# JsonhGdextension
+<img src="https://github.com/jsonh-org/Jsonh/blob/main/IconUpscaled.png?raw=true" width=180>
 
 [![C++](https://img.shields.io/github/release/jsonh-org/JsonhGdextension.svg?style=flat-square&label=c%2b%2b)](https://github.com/jsonh-org/JsonhGdextension/releases)
 
