@@ -1,29 +1,60 @@
-# godot-cpp template
-This repository serves as a quickstart template for GDExtension development with Godot 4.0+.
+# JsonhGdextension
 
-## Contents
-* An empty Godot project (`demo/`)
-* godot-cpp as a submodule (`godot-cpp/`)
-* GitHub Issues template (`.github/ISSUE_TEMPLATE.yml`)
-* GitHub CI/CD workflows to publish your library packages when creating a release (`.github/workflows/builds.yml`)
-* preconfigured source files for C++ development of the GDExtension (`src/`)
-* setup to automatically generate `.xml` files in a `doc_classes/` directory to be parsed by Godot as [GDExtension built-in documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/gdextension/gdextension_docs_system.html)
+[![C++](https://img.shields.io/github/release/jsonh-org/JsonhGdextension.svg?style=flat-square&label=c%2b%2b)](https://github.com/jsonh-org/JsonhGdextension/releases)
 
-## Usage - Template
+**JSON for Humans.**
 
-To use this template, log in to GitHub and click the green "Use this template" button at the top of the repository page.
-This will let you create a copy of this repository with a clean git history. Make sure you clone the correct branch as these are configured for development of their respective Godot development branches and differ from each other. Refer to the docs to see what changed between the versions.
+JSON is great. Until you miss that trailing comma... or want to use comments. What about multiline strings?
+JSONH provides a much more elegant way to write JSON that's designed for humans rather than machines.
 
-For getting started after cloning your own copy to your local machine, you should: 
-* initialize the godot-cpp git submodule via `git submodule update --init`
-* change the name of your library
-  * change the name of the compiled library file inside the `SConstruct` file by modifying the `libname` string.
-  * change the pathnames of the to be loaded library name inside the `demo/bin/example.gdextension` file. By replacing `libgdexample` to the name specified in your `SConstruct` file.
-  * change the name of the `demo/bin/example.gdextension` file
-* change the `entry_symbol` string inside your `demo/bin/your-extension.gdextension` file to be configured for your GDExtension name. This should be the same as the `GDExtensionBool GDE_EXPORT` external C function. As the name suggests, this sets the entry function for your GDExtension to be loaded by the Godot editors C API.
-* register the classes you want Godot to interact with inside the `register_types.cpp` file in the initialization method (here `initialize_gdextension_types`) in the syntax `GDREGISTER_CLASS(CLASS-NAME);`.
+Since JSONH is compatible with JSON, any JSONH syntax can be represented with equivalent JSON.
 
-## Usage - Actions
+JsonhGdextension is an implementation of [JSONH v1](https://github.com/jsonh-org/Jsonh).
 
-This repository comes with a GitHub action that builds the GDExtension for cross-platform use. It triggers automatically for each pushed change. You can find and edit it in [builds.yml](.github/workflows/builds.yml).
-After a workflow run is complete, you can find the file `godot-cpp-template.zip` on the `Actions` tab on GitHub.
+## Example
+
+```jsonh
+{
+    // use #, // or /**/ comments
+    
+    // quotes are optional
+    keys: without quotes,
+
+    // commas are optional
+    isn\'t: {
+        that: cool? # yes
+    }
+
+    // use multiline strings
+    haiku: '''
+        Let me die in spring
+          beneath the cherry blossoms
+            while the moon is full.
+        '''
+    
+    // compatible with JSON5
+    key: 0xDEADCAFE
+
+    // or use JSON
+    "old school": 1337
+}
+```
+
+## Usage
+
+Everything you need is contained within `Jsonh`:
+
+```gdscript
+var jsonh:String = "[hello, world]"
+var value:Variant = Jsonh.parse_element(jsonh).value
+print(value) # ["hello", "world"]
+```
+
+## Dependencies
+
+- C++20
+- [jsonh-org/JsonhCpp](https://github.com/jsonh-org/JsonhCpp) (up-to-date 2025/04/18)
+
+## Limitations
+
+Due to the limitations of GDExtension and GDScript, only one static method (`Jsonh.parse_element`) is exposed.

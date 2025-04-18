@@ -5,7 +5,7 @@ import sys
 from methods import print_error
 
 
-libname = "EXTENSION-NAME"
+libname = "JsonhGdextension"
 projectdir = "demo"
 
 localEnv = Environment(tools=["default"], PLATFORM="")
@@ -36,6 +36,14 @@ Run the following command to download godot-cpp:
     sys.exit(1)
 
 env = SConscript("godot-cpp/SConstruct", {"env": env, "customs": customs})
+
+# BEGIN EDIT
+# Add C++23 support
+if env.get("is_msvc", False):
+    env.Append(CXXFLAGS=["/std:c++20"])
+else:
+    env.Append(CXXFLAGS=["-std=c++20"])
+# END EDIT
 
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
