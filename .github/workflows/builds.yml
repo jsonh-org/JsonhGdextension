@@ -61,6 +61,7 @@ jobs:
         with:
           platform: ${{ matrix.target.platform }}
           em-version: 3.1.62
+          ndk-version: r26c # Set NDK version to support C++ standard version
 
       # Build GDExtension (with caches)
 
