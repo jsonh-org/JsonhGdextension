@@ -29015,7 +29015,7 @@ struct jsonh_token {
     /// <summary>
     /// The value of the token, or an empty string.
     /// </summary>
-    std::string value = value;
+    std::string value;
 
     /// <summary>
     /// Constructs a single JSONH token.
@@ -29164,7 +29164,7 @@ private:
         }
 
         // Combine whole and fraction
-        return std::stold(whole.value() + "." + fraction.value());
+        return std::stold(std::to_string(whole.value()) + "." + std::to_string(fraction.value()));
     }
     /// <summary>
     /// Converts a whole number (e.g. <c>12345</c>) from the given base (e.g. <c>01234567</c>) to a base-10 integer.
@@ -29668,6 +29668,10 @@ public:
                         // Path found
                         return true;
                     }
+                    break;
+                }
+                // Other
+                default: {
                     break;
                 }
             }
