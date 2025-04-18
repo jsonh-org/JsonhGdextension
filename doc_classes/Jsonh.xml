@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Jsonh" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Helper class for parsing JSONH documents.
+	</brief_description>
+	<description>
+		The Jsonh class from [url="https://github.com/jsonh-org/JsonhGdextension"]JsonhGdExtension[/url] provides functions to parse JSONH documents to GDExtension.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="parse_element">
+			<return type="Dictionary" />
+			<param index="0" name="string" type="String" />
+			<description>
+				Parses a JSONH document as a Variant.
+				Returns a dictionary with the following elements:
+				- [code]value[/code]: the value if successful.
+				- [code]error[/code]: the error string if unsuccessful.
+				Example:
+				[codeblock]
+				var jsonh:String = "[hello, world]"
+				var value:Variant = Jsonh.parse_element(jsonh).value
+				print(value) # ["hello", "world"]
+				[/codeblock]
+			</description>
+		</method>
+	</methods>
+</class>
