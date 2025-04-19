@@ -29256,18 +29256,6 @@ public:
     utf8_reader(const std::string& string) noexcept
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 string_view converted to a string.
-    /// </summary>
-    utf8_reader(const std::string_view& string_view) noexcept
-        : utf8_reader(std::string(string_view)) {
-    }
-    /// <summary>
-    /// Constructs a reader that reads UTF-8 runes from a UTF-8 char pointer converted to a string.
-    /// </summary>
-    utf8_reader(const char* string) noexcept
-        : utf8_reader(std::string(string)) {
-    }
 
     /// <summary>
     /// Returns the current byte position in <see cref="inner_stream"/>.
@@ -29440,25 +29428,13 @@ public:
     jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 string_view converted to a string.
-    /// </summary>
-    jsonh_reader(const std::string_view& string_view, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : jsonh_reader(std::string(string_view), options) {
-    }
-    /// <summary>
-    /// Constructs a reader that reads JSONH from a UTF-8 char pointer converted to a string.
-    /// </summary>
-    jsonh_reader(const char* string, jsonh_reader_options options = jsonh_reader_options()) noexcept
-        : jsonh_reader(std::string(string), options) {
-    }
 
     /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    static nonstd::expected<t, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
-        return jsonh_reader(std::move(stream)).parse_element<t>();
+    template <typename T>
+    static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
+        return jsonh_reader(std::move(stream)).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
@@ -29467,11 +29443,11 @@ public:
         return jsonh_reader(std::move(stream)).parse_element();
     }
     /// <summary>
-    /// Parses a single element from a UTF-8 input stream and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    static nonstd::expected<t, std::string> parse_element(std::istream& stream) noexcept {
-        return jsonh_reader(stream).parse_element<t>();
+    template <typename T>
+    static nonstd::expected<T, std::string> parse_element(std::istream& stream) noexcept {
+        return jsonh_reader(stream).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
@@ -29480,11 +29456,11 @@ public:
         return jsonh_reader(stream).parse_element();
     }
     /// <summary>
-    /// Parses a single element from a UTF-8 string and deserializes it as <c>t</c>.
+    /// Parses a single element from a UTF-8 string and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    static nonstd::expected<t, std::string> parse_element(const std::string& string) noexcept {
-        return jsonh_reader(string).parse_element<t>();
+    template <typename T>
+    static nonstd::expected<T, std::string> parse_element(const std::string& string) noexcept {
+        return jsonh_reader(string).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string.
@@ -29494,15 +29470,15 @@ public:
     }
 
     /// <summary>
-    /// Parses a single element from the reader and deserializes it as <c>t</c>.
+    /// Parses a single element from the reader and deserializes it as <typeparamref name="T"/>.
     /// </summary>
-    template <typename t>
-    nonstd::expected<t, std::string> parse_element() noexcept {
+    template <typename T>
+    nonstd::expected<T, std::string> parse_element() noexcept {
         nonstd::expected<json, std::string> node = parse_element();
         if (!node) {
             return nonstd::unexpected<std::string>(node.error());
         }
-        return node.value().template get<t>();
+        return node.value().template get<T>();
     }
     /// <summary>
     /// Parses a single element from the reader.
@@ -29825,7 +29801,7 @@ private:
             }
 
             // Closing brace
-            if (next == "}") {
+            if (next.value() == "}") {
                 // End of object
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_object));
@@ -30004,7 +29980,7 @@ private:
             }
 
             // Closing bracket
-            if (next == "]") {
+            if (next.value() == "]") {
                 // End of array
                 read();
                 tokens.push_back(jsonh_token(json_token_type::end_array));
@@ -30089,14 +30065,14 @@ private:
             }
 
             // End quote
-            if (next == start_quote) {
+            if (next.value() == start_quote) {
                 end_quote_counter++;
                 if (end_quote_counter == start_quote_counter) {
                     break;
                 }
             }
             // Escape sequence
-            else if (next == "\\") {
+            else if (next.value() == "\\") {
                 nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
@@ -30481,11 +30457,11 @@ private:
         }
 
         // Number
-        if ((next >= "0" && next <= "9") || (next == "-" || next == "+") || next == ".") {
+        if ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".") {
             return read_number_or_quoteless_string();
         }
         // String
-        else if (next == "\"" || next == "'") {
+        else if (next.value() == "\"" || next.value() == "'") {
             return read_string();
         }
         // Quoteless string (or named literal)
@@ -30502,9 +30478,12 @@ private:
 
             // Peek rune
             std::optional<std::string> next = peek();
+            if (!next) {
+                break;
+            }
 
             // Comment
-            if (next == "#" || next == "/") {
+            if (next.value() == "#" || next.value() == "/") {
                 tokens.push_back(read_comment());
             }
             // End of comments
@@ -30551,7 +30530,7 @@ private:
                     return nonstd::unexpected<std::string>("Expected end of block comment, got end of input");
                 }
                 // End of block comment
-                if (next == "*" && read_one("/")) {
+                if (next.value() == "*" && read_one("/")) {
                     return jsonh_token(json_token_type::comment, comment_builder);
                 }
             }
