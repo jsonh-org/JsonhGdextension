@@ -17,8 +17,8 @@ jobs:
           [
             { platform: linux, arch: x86_64, os: ubuntu-24.04 },
             { platform: linux, arch: x86_32, os: ubuntu-24.04 },
-            { platform: linux, arch: arm64, os: ubuntu-24.04-arm },
-            { platform: linux, arch: arm32, os: ubuntu-24.04-arm },
+            { platform: linux, arch: arm64, os: ubuntu-24.04 },
+            { platform: linux, arch: arm32, os: ubuntu-24.04 },
             { platform: windows, arch: x86_64, os: windows-latest },
             { platform: windows, arch: x86_32, os: windows-latest },
             { platform: windows, arch: arm64, os: windows-latest },
@@ -52,9 +52,9 @@ jobs:
       #  run: |
       #    clang-format src/** --dry-run --Werror
 
-      # Add linux x86_32 toolchain
+      # Add Linux cross-architecture toolchain
       - name: Install multilib support
-        if: ${{ matrix.target.platform == 'linux' && matrix.target.arch == 'x86_32' }}
+        if: ${{ matrix.target.platform == 'linux' }}
         run: |
           sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib
 
