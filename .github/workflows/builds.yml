@@ -52,6 +52,12 @@ jobs:
       #  run: |
       #    clang-format src/** --dry-run --Werror
 
+      # Add linux x86_32 toolchain
+      - name: Install multilib support
+        if: ${{ matrix.target.platform == 'linux' && matrix.target.arch == 'x86_32' }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib
+
       # Setup dependencies
       - name: Setup godot-cpp
         uses: ./godot-cpp/.github/actions/setup-godot-cpp
