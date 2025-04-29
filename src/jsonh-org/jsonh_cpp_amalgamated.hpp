@@ -29038,7 +29038,7 @@ namespace jsonh_cpp {
 /// <summary>
 /// Options for a jsonh_reader.
 /// </summary>
-struct jsonh_reader_options final {
+struct jsonh_reader_options {
     /// <summary>
     /// Enables/disables parsing unclosed inputs.
     /// <code>
@@ -29369,11 +29369,44 @@ public:
     /// </summary>
     std::optional<std::string> peek_reverse() const noexcept {
         size_t original_position = position();
-        std::optional<std::string> next = read_reverse();
+        std::optional<std::string> last = read_reverse();
         seek(original_position);
-        return next;
+        return last;
+    }
+    /// <summary>
+    /// If the last UTF-8 rune is the given option, moves backward by its number of bytes.
+    /// </summary>
+    bool read_one_reverse(std::string option) const noexcept {
+        if (peek_reverse() == option) {
+            read_reverse();
+            return true;
+        }
+        return false;
+    }
+    /// <summary>
+    /// If the last UTF-8 rune is one of the given options, moves backward by its number of bytes and returns the option.
+    /// </summary>
+    std::optional<std::string> read_any_reverse(const std::set<std::string>& options) const noexcept {
+        // Peek char
+        std::optional<std::string> last = peek_reverse();
+        if (!last) {
+            return std::nullopt;
+        }
+        // Match option
+        if (!options.contains(last.value())) {
+            return std::nullopt;
+        }
+        // Option matched
+        read_reverse();
+        return last;
     }
 
+    /// <summary>
+    /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
+    /// </summary>
+    static bool is_utf8_first_byte(char byte) noexcept {
+        return (byte & 0xC0) != 0x80;
+    }
     /// <summary>
     /// Calculates the byte count of a UTF-8 rune from the bits in its first byte.
     /// </summary>
@@ -29383,12 +29416,6 @@ public:
     static int get_utf8_sequence_length(char first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
-    }
-    /// <summary>
-    /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
-    /// </summary>
-    static bool is_utf8_first_byte(char byte) noexcept {
-        return (byte & 0xC0) != 0x80;
     }
 };
 
@@ -30045,8 +30072,6 @@ private:
 
         // Count multiple end quotes
         size_t end_quote_counter = 0;
-        // Find last newline
-        size_t last_newline_index = -1;
 
         // Read string
         std::string string_builder;
@@ -30073,7 +30098,7 @@ private:
             }
             // Escape sequence
             else if (next.value() == "\\") {
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
@@ -30081,11 +30106,6 @@ private:
             }
             // Literal character
             else {
-                // Newline
-                if (newline_runes.contains(next.value())) {
-                    last_newline_index = string_builder.size();
-                }
-
                 string_builder += next.value();
             }
         }
@@ -30236,7 +30256,7 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_hex_escape_sequence(string_builder);
+                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence(string_builder);
                 if (!escape_sequence_result) {
                     return nonstd::unexpected<std::string>(escape_sequence_result.error());
                 }
@@ -30263,15 +30283,27 @@ private:
             return nonstd::unexpected<std::string>("Empty quoteless string");
         }
 
-        // Trim trailing whitespace
+        // Trim leading whitespace
         utf8_reader string_builder_reader(string_builder);
-        string_builder_reader.seek(0, std::ios_base::end);
         while (true) {
             size_t original_position = string_builder_reader.position();
-            std::optional<std::string> next = string_builder_reader.read_reverse();
+            std::optional<std::string> next = string_builder_reader.read();
 
             // Non-whitespace
             if (!next || !whitespace_runes.contains(next.value())) {
+                string_builder.erase(0, original_position);
+                break;
+            }
+        }
+        // Trim trailing whitespace
+        utf8_reader string_builder_reader2(string_builder);
+        string_builder_reader2.seek(0, std::ios_base::end);
+        while (true) {
+            size_t original_position = string_builder_reader2.position();
+            std::optional<std::string> last = string_builder_reader2.read_reverse();
+
+            // Non-whitespace
+            if (!last || !whitespace_runes.contains(last.value())) {
                 string_builder.erase(original_position);
                 break;
             }
@@ -30509,7 +30541,7 @@ private:
                 block_comment = true;
             }
             else {
-                return nonstd::unexpected<std::string>("Unexpected '/'");
+                return nonstd::unexpected<std::string>("Unexpected `/`");
             }
         }
         else {
@@ -30566,13 +30598,12 @@ private:
     nonstd::expected<unsigned int, std::string> read_hex_sequence(size_t length) noexcept {
         std::string hex_chars(length, '\0');
 
-        for (int index = 0; index < length; index++) {
+        for (size_t index = 0; index < length; index++) {
             std::optional<std::string> next = read();
 
             // Hex digit
             if ((next >= "0" && next <= "9") || (next >= "A" && next <= "F") || (next >= "a" && next <= "f")) {
-                char next_char = next.value()[0];
-                hex_chars[index] = next_char;
+                hex_chars[index] = next.value()[0];
             }
             // Unexpected char
             else {
@@ -30583,7 +30614,7 @@ private:
         // Parse unicode character from hex digits
         return (unsigned int)std::stoul(hex_chars, nullptr, 16);
     }
-    nonstd::expected<std::string, std::string> read_hex_escape_sequence(const std::string& string_builder) noexcept {
+    nonstd::expected<std::string, std::string> read_escape_sequence(const std::string& string_builder) noexcept {
         std::optional<std::string> escape_char = read();
         if (!escape_char) {
             return nonstd::unexpected<std::string>("Expected escape sequence, got end of input");
@@ -30664,40 +30695,33 @@ private:
         // High surrogate
         if (is_utf16_high_surrogate(code_point.value())) {
             size_t original_position = position();
-            bool low_surrogate_success = false;
             // Escape sequence
             if (read_one("\\")) {
-                // Low unicode hex sequence
-                if (read_one("u")) {
-                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(4);
+                std::optional<std::string> next = read_any({ "u", "x", "U" });
+                // Low surrogate escape sequence
+                if (next) {
+                    // Read hex sequence
+                    nonstd::expected<unsigned int, std::string> low_code_point;
+                    if (next == "u") {
+                        low_code_point = read_hex_sequence(4);
+                    }
+                    else if (next == "x") {
+                        low_code_point = read_hex_sequence(2);
+                    }
+                    else if (next == "U") {
+                        low_code_point = read_hex_sequence(8);
+                    }
+                    // Ensure hex sequence read successfully
                     if (!low_code_point) {
                         return nonstd::unexpected<std::string>(low_code_point.error());
                     }
+                    // Combine high and low surrogates
                     code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                    low_surrogate_success = true;
                 }
-                // Low short unicode hex sequence
-                else if (read_one("x")) {
-                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(2);
-                    if (!low_code_point) {
-                        return nonstd::unexpected<std::string>(low_code_point.error());
-                    }
-                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                    low_surrogate_success = true;
+                // Other escape sequence
+                else {
+                    seek(original_position);
                 }
-                // Low long unicode hex sequence
-                else if (read_one("U")) {
-                    nonstd::expected<unsigned int, std::string> low_code_point = read_hex_sequence(8);
-                    if (!low_code_point) {
-                        return nonstd::unexpected<std::string>(low_code_point.error());
-                    }
-                    code_point = utf16_surrogates_to_code_point(code_point.value(), low_code_point.value());
-                    low_surrogate_success = true;
-                }
-            }
-            // Missing low surrogate
-            if (!low_surrogate_success) {
-                seek(original_position);
             }
         }
 
@@ -30709,38 +30733,44 @@ private:
         return rune.value();
     }
     static nonstd::expected<std::string, std::string> code_point_to_utf8(unsigned int code_point) noexcept {
-        std::string result;
         // Invalid surrogate
         if (code_point >= 0xD800 && code_point <= 0xDFFF) {
             return nonstd::unexpected<std::string>("Invalid code point (surrogate half)");
         }
         // 1-byte UTF-8
         else if (code_point <= 0x7F) {
-            result += (char)code_point;
+            return std::string({
+                (char)code_point,
+            });
         }
         // 2-byte UTF-8
         else if (code_point <= 0x7FF) {
-            result += (char)(0xC0 | (code_point >> 6));
-            result += (char)(0x80 | (code_point & 0x3F));
+            return std::string({
+                (char)(0xC0 | (code_point >> 6)),
+                (char)(0x80 | (code_point & 0x3F)),
+            });
         }
         // 3-byte UTF-8
         else if (code_point <= 0xFFFF) {
-            result += (char)(0xE0 | (code_point >> 12));
-            result += (char)(0x80 | ((code_point >> 6) & 0x3F));
-            result += (char)(0x80 | (code_point & 0x3F));
+            return std::string({
+                (char)(0xE0 | (code_point >> 12)),
+                (char)(0x80 | ((code_point >> 6) & 0x3F)),
+                (char)(0x80 | (code_point & 0x3F)),
+            });
         }
         // 4-byte UTF-8
         else if (code_point <= 0x10FFFF) {
-            result += (char)(0xF0 | (code_point >> 18));
-            result += (char)(0x80 | ((code_point >> 12) & 0x3F));
-            result += (char)(0x80 | ((code_point >> 6) & 0x3F));
-            result += (char)(0x80 | (code_point & 0x3F));
+            return std::string({
+                (char)(0xF0 | (code_point >> 18)),
+                (char)(0x80 | ((code_point >> 12) & 0x3F)),
+                (char)(0x80 | ((code_point >> 6) & 0x3F)),
+                (char)(0x80 | (code_point & 0x3F)),
+            });
         }
         // Invalid UTF-8
         else {
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
-        return result;
     }
     static unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
