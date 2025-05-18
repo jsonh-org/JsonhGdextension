@@ -61,7 +61,3 @@ print(value) # ["hello", "world"]
 ### Limited API
 
 Due to the limitations of GDExtension and GDScript, only one static method (`Jsonh.parse_element`) is exposed.
-
-### Android support
-
-JsonhGdextension does not currently support Android due to an issue with nlohmann/json. See [nlohmann/json#4736](https://github.com/nlohmann/json/pull/4736).
