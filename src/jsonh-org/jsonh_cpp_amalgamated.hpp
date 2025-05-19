@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.2
+// Version: 4.3
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29159,7 +29159,7 @@ public:
         std::string base_digits = "0123456789";
         // Hexadecimal
         if (jsonh_number.starts_with("0x") || jsonh_number.starts_with("0X")) {
-            base_digits = "0123456789ABCDEFabcdef";
+            base_digits = "0123456789abcdef";
             jsonh_number.erase(0, 2);
         }
         // Binary
@@ -29185,8 +29185,11 @@ private:
     /// Converts a fractional number with an exponent (e.g. <c>12.3e4.5</c>) from the given base (e.g. <c>01234567</c>) to a base-10 real.
     /// </summary>
     static nonstd::expected<long double, std::string> parse_fractional_number_with_exponent(std::string_view digits, std::string_view base_digits) noexcept {
-        // Find exponent
-        size_t exponent_index = digits.find_first_of("eE");
+        // Find exponent (unless hexadecimal)
+        size_t exponent_index = std::string::npos;
+        if (base_digits.find("e") == std::string::npos) {
+            exponent_index = digits.find_first_of("eE");
+        }
         // If no exponent then normalize real
         if (exponent_index == std::string::npos) {
             return parse_fractional_number(digits, base_digits);
@@ -29256,7 +29259,7 @@ private:
         }
 
         // Get sign
-        size_t sign = 1;
+        int sign = 1;
         if (digits.starts_with('-')) {
             sign = -1;
             digits = digits.substr(1);
@@ -29271,7 +29274,7 @@ private:
         for (size_t index = 0; index < digits.size(); index++) {
             // Get current digit
             char digit_char = digits[index];
-            size_t digit_int = base_digits.find(digit_char);
+            size_t digit_int = base_digits.find((char)std::tolower(digit_char));
 
             // Ensure digit is valid
             if (digit_int == std::string::npos) {
@@ -30460,7 +30463,7 @@ private:
             std::optional<std::string> hex_base_char = read_any({ "x", "X" });
             if (hex_base_char) {
                 number_builder += hex_base_char.value();
-                base_digits = "0123456789ABCDEFabcdef";
+                base_digits = "0123456789abcdef";
             }
             else {
                 std::optional<std::string> binary_base_char = read_any({ "b", "B" });
@@ -30518,7 +30521,7 @@ private:
             }
 
             // Digit
-            if (base_digits.find(next.value()) != std::string::npos) {
+            if (base_digits.find(to_lower(next.value().data())) != std::string::npos) {
                 read();
                 number_builder += next.value();
             }
@@ -30852,6 +30855,13 @@ private:
     }
     static bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
+    }
+    static std::string to_lower(const char* string) noexcept {
+        std::string result(string);
+        for (char& next : result) {
+            next = std::tolower(next);
+        }
+        return result;
     }
 };
 
