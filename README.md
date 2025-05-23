@@ -9,7 +9,9 @@ JSONH provides a much more elegant way to write JSON that's designed for humans 
 
 Since JSONH is compatible with JSON, any JSONH syntax can be represented with equivalent JSON.
 
-JsonhGdextension is an implementation of [JSONH v1](https://github.com/jsonh-org/Jsonh).
+## JsonhGdextension
+
+JsonhGdextension is a parser implementation of [JSONH v1](https://github.com/jsonh-org/Jsonh) for GDExtension using [JsonhCpp](https://github.com/jsonh-org/JsonhCpp).
 
 ## Example
 
