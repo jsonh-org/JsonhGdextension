@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.4
+// Version: 4.5
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -16261,7 +16261,7 @@ class binary_reader
                 success = false;
                 break;
             }
-            result.push_back(static_cast<std::uint8_t>(current));
+            result.push_back(static_cast<typename binary_t::value_type>(current));
         }
         return success;
     }
@@ -21057,9 +21057,9 @@ class binary_writer
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
+        if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                   static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                   static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))))
         {
             oa->write_character(format == detail::input_format_t::cbor
                                 ? get_cbor_float_prefix(static_cast<float>(n))
@@ -29182,29 +29182,50 @@ public:
     /// Output: <c>5200</c>
     /// </summary>
     static nonstd::expected<long double, std::string> parse(std::string jsonh_number) noexcept {
+        // Remove underscores
+        std::erase(jsonh_number, '_');
+        std::string_view digits = jsonh_number;
+
+        // Get sign
+        int sign = 1;
+        if (digits.starts_with('-')) {
+            sign = -1;
+            digits = digits.substr(1);
+        }
+        else if (digits.starts_with('+')) {
+            sign = 1;
+            digits = digits.substr(1);
+        }
+
         // Decimal
         std::string base_digits = "0123456789";
         // Hexadecimal
-        if (jsonh_number.starts_with("0x") || jsonh_number.starts_with("0X")) {
+        if (digits.starts_with("0x") || digits.starts_with("0X")) {
             base_digits = "0123456789abcdef";
-            jsonh_number.erase(0, 2);
+            digits = digits.substr(2);
         }
         // Binary
-        else if (jsonh_number.starts_with("0b") || jsonh_number.starts_with("0B")) {
+        else if (digits.starts_with("0b") || digits.starts_with("0B")) {
             base_digits = "01";
-            jsonh_number.erase(0, 2);
+            digits = digits.substr(2);
         }
         // Octal
-        else if (jsonh_number.starts_with("0o") || jsonh_number.starts_with("0O")) {
+        else if (digits.starts_with("0o") || digits.starts_with("0O")) {
             base_digits = "01234567";
-            jsonh_number.erase(0, 2);
+            digits = digits.substr(2);
         }
 
-        // Remove underscores
-        std::erase(jsonh_number, '_');
-
         // Parse number with base digits
-        return parse_fractional_number_with_exponent(jsonh_number, base_digits);
+        nonstd::expected<long double, std::string> number = parse_fractional_number_with_exponent(digits, base_digits);
+        if (!number) {
+            return nonstd::unexpected<std::string>(number.error());
+        }
+
+        // Apply sign
+        if (sign != 1) {
+            number.value() *= sign;
+        }
+        return number;
     }
 
 private:
@@ -30496,8 +30517,15 @@ private:
         }
     }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
+        // Read sign
+        std::optional<std::string> sign = read_any({ "-", "+" });
+        if (sign) {
+            number_builder += sign.value();
+        }
+
         // Read base
         std::string base_digits = "0123456789";
+        bool has_base_specifier = false;
         if (read_one("0")) {
             number_builder += '0';
 
@@ -30505,37 +30533,41 @@ private:
             if (hex_base_char) {
                 number_builder += hex_base_char.value();
                 base_digits = "0123456789abcdef";
+                has_base_specifier = true;
             }
             else {
                 std::optional<std::string> binary_base_char = read_any({ "b", "B" });
-                if (hex_base_char) {
+                if (binary_base_char) {
                     number_builder += binary_base_char.value();
                     base_digits = "01";
+                    has_base_specifier = true;
                 }
                 else {
                     std::optional<std::string> octal_base_char = read_any({ "o", "O" });
                     if (octal_base_char) {
                         number_builder += octal_base_char.value();
                         base_digits = "01234567";
+                        has_base_specifier = true;
                     }
                 }
             }
         }
 
         // Read main number
-        nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits);
+        nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
         if (!main_result) {
             return nonstd::unexpected<std::string>(main_result.error());
         }
 
         // Hexadecimal exponent
         if (number_builder.back() == 'e' || number_builder.back() == 'E') {
+            // Read sign
             std::optional<std::string> exponent_sign = read_any({ "+", "-" });
             if (exponent_sign) {
                 number_builder += exponent_sign.value();
 
                 // Read exponent number
-                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
                 if (!exponent_result) {
                     return nonstd::unexpected<std::string>(exponent_result.error());
                 }
@@ -30547,8 +30579,14 @@ private:
             if (exponent_char) {
                 number_builder += exponent_char.value();
 
+                // Read sign
+                std::optional<std::string> exponent_sign = read_any({ "-", "+" });
+                if (exponent_sign) {
+                    number_builder += exponent_sign.value();
+                }
+
                 // Read exponent number
-                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
+                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
                 if (!exponent_result) {
                     return nonstd::unexpected<std::string>(exponent_result.error());
                 }
@@ -30558,12 +30596,9 @@ private:
         // End of number
         return jsonh_token(json_token_type::number, number_builder);
     }
-    nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits) noexcept {
-        // Read sign
-        read_any({ "-", "+" });
-
+    nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier) noexcept {
         // Leading underscore
-        if (read_one("_")) {
+        if (!has_base_specifier && peek() == "_") {
             return nonstd::unexpected<std::string>("Leading `_` in number");
         }
 
@@ -30581,12 +30616,12 @@ private:
                 read();
                 number_builder += next.value();
             }
-            // Decimal point
+            // Dot
             else if (next.value() == ".") {
                 read();
                 number_builder += next.value();
 
-                // Duplicate decimal point
+                // Duplicate dot
                 if (is_fraction) {
                     return nonstd::unexpected<std::string>("Duplicate `.` in number");
                 }
@@ -30606,6 +30641,11 @@ private:
         // Ensure not empty
         if (number_builder.empty()) {
             return nonstd::unexpected<std::string>("Empty number");
+        }
+
+        // Ensure at least one digit
+        if (number_builder.find_first_not_of(".-+_") == std::string::npos) {
+            return nonstd::unexpected<std::string>("Number must have at least one digit");
         }
 
         // Trailing underscore
