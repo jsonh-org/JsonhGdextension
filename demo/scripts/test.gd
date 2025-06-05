@@ -26,9 +26,9 @@ func benchmark(duration:float, use_jsonh:bool)->void:
 	var start_timestamp:int = Time.get_ticks_msec()
 	while (Time.get_ticks_msec() - start_timestamp) < (duration * 1000):
 		if use_jsonh:
-			var value:Variant = Jsonh.parse_element(json).value
+			var _value:Variant = Jsonh.parse_element(json).value
 		else:
-			var value:Variant = JSON.parse_string(json)
+			var _value:Variant = JSON.parse_string(json)
 		#end
 		counter += 1
 	#end
