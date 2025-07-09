@@ -15,21 +15,21 @@ jobs:
         # See https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow
         target:
           [
-            { platform: linux, arch: x86_64, os: ubuntu-24.04 },
-            { platform: linux, arch: x86_32, os: ubuntu-24.04 },
-            { platform: linux, arch: arm64, os: ubuntu-24.04-arm },
-            { platform: linux, arch: arm32, os: ubuntu-24.04-arm },
+            { platform: linux, arch: x86_64, os: ubuntu-22.04 },
+            { platform: linux, arch: x86_32, os: ubuntu-22.04 },
+            { platform: linux, arch: arm64, os: ubuntu-22.04-arm },
+            { platform: linux, arch: arm32, os: ubuntu-22.04-arm },
             { platform: windows, arch: x86_64, os: windows-latest },
             { platform: windows, arch: x86_32, os: windows-latest },
             { platform: windows, arch: arm64, os: windows-latest },
             { platform: macos, arch: universal, os: macos-latest },
-            { platform: android, arch: x86_64, os: ubuntu-24.04 },
-            { platform: android, arch: x86_32, os: ubuntu-24.04 },
-            { platform: android, arch: arm64, os: ubuntu-24.04 },
-            { platform: android, arch: arm32, os: ubuntu-24.04 },
+            { platform: android, arch: x86_64, os: ubuntu-22.04 },
+            { platform: android, arch: x86_32, os: ubuntu-22.04 },
+            { platform: android, arch: arm64, os: ubuntu-22.04 },
+            { platform: android, arch: arm32, os: ubuntu-22.04 },
             { platform: ios, arch: arm64, os: macos-latest },
-            { platform: web, arch: wasm32, os: ubuntu-24.04 },
-            #{ platform: web, arch: wasm64, os: ubuntu-24.04 }, # Doesn't exist yet
+            { platform: web, arch: wasm32, os: ubuntu-22.04 },
+            #{ platform: web, arch: wasm64, os: ubuntu-22.04 }, # Doesn't exist yet
           ]
         target-type: [template_debug, template_release]
         float-precision: [single, double]
@@ -104,7 +104,7 @@ jobs:
   # Merges all the build artifacts together into a single artifact.
   # If you comment out this step, all the builds will be uploaded individually.
   merge:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Merge Artifacts
