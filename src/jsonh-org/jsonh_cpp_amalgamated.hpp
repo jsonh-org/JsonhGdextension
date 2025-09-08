@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.8
+// Version: 4.10
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -7816,7 +7816,7 @@ struct is_ordered_map
     template <typename C> static one test( decltype(&C::capacity) ) ;
     template <typename C> static two test(...);
 
-    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg,cppcoreguidelines-use-enum-class)
 };
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
@@ -10481,7 +10481,7 @@ template<typename T>
 struct is_iterator_of_multibyte
 {
     using value_type = typename std::iterator_traits<T>::value_type;
-    enum
+    enum // NOLINT(cppcoreguidelines-use-enum-class)
     {
         value = sizeof(value_type) > 1
     };
@@ -24890,7 +24890,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief copy assignment
     /// @sa https://json.nlohmann.me/api/basic_json/operator=/
-    basic_json& operator=(basic_json other) noexcept (
+    basic_json& operator=(basic_json other) noexcept ( // NOLINT(cppcoreguidelines-c-copy-assignment-signature,misc-unconventional-assign-operator)
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
         std::is_nothrow_move_constructible<json_value>::value&&
@@ -27762,6 +27762,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
     {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+        if (sax == nullptr)
+        {
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
+        }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
@@ -27778,6 +27794,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
     {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+        if (sax == nullptr)
+        {
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
+        }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
@@ -27798,6 +27830,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
     {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+        if (sax == nullptr)
+        {
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
+        }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto ia = i.get();
         return format == input_format_t::json
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
@@ -29412,7 +29460,7 @@ private:
         else {
             exponent_index = digits.find_first_of("eE");
         }
-        // If no exponent then normalize real
+        // If no exponent then parse real
         if (exponent_index == std::string::npos) {
             return parse_fractional_number(digits, base_digits);
         }
@@ -29445,7 +29493,7 @@ private:
 
         // Find dot
         size_t dot_index = digits.find('.');
-        // If no dot then normalize integer
+        // If no dot then parse integer
         if (dot_index == std::string::npos) {
             nonstd::expected<long long, std::string> integer = parse_whole_number(digits, base_digits);
             if (!integer) {
@@ -29665,8 +29713,7 @@ public:
             }
         }
 
-        // Reverse bytes
-        std::reverse(bytes.begin(), bytes.end());
+        // Never reached first byte
         return std::nullopt;
     }
     /// <summary>
@@ -30630,7 +30677,7 @@ private:
     }
     bool detect_quoteless_string(std::string& whitespace_builder) {
         while (true) {
-            // Read rune
+            // Peek rune
             std::optional<std::string> next = peek();
             if (!next) {
                 break;
@@ -30655,26 +30702,6 @@ private:
         // Found quoteless string if found backslash or non-reserved char
         std::optional<std::string> next_char = peek();
         return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
-    }
-    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
-        // Read number
-        std::string number_builder;
-        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
-        if (number) {
-            // Try read quoteless string starting with number
-            std::string whitespace_chars;
-            if (detect_quoteless_string(whitespace_chars)) {
-                return read_quoteless_string(number.value().value + whitespace_chars);
-            }
-            // Otherwise, accept number
-            else {
-                return number;
-            }
-        }
-        // Read quoteless string starting with malformed number
-        else {
-            return read_quoteless_string(number_builder);
-        }
     }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read sign
@@ -30763,6 +30790,7 @@ private:
         }
 
         bool is_fraction = false;
+        bool is_empty = true;
 
         while (true) {
             // Peek rune
@@ -30775,11 +30803,13 @@ private:
             if (base_digits.find(to_ascii_lower(next.value().data())) != std::string::npos) {
                 read();
                 number_builder += next.value();
+                is_empty = false;
             }
             // Dot
             else if (next.value() == ".") {
                 read();
                 number_builder += next.value();
+                is_empty = false;
 
                 // Duplicate dot
                 if (is_fraction) {
@@ -30791,6 +30821,7 @@ private:
             else if (next.value() == "_") {
                 read();
                 number_builder += next.value();
+                is_empty = false;
             }
             // Other
             else {
@@ -30799,7 +30830,7 @@ private:
         }
 
         // Ensure not empty
-        if (number_builder.empty()) {
+        if (is_empty) {
             return nonstd::unexpected<std::string>("Empty number");
         }
 
@@ -30816,6 +30847,26 @@ private:
         // End of number
         return nonstd::expected<void, std::string>(); // Success
     }
+    nonstd::expected<jsonh_token, std::string> read_number_or_quoteless_string() noexcept {
+        // Read number
+        std::string number_builder;
+        nonstd::expected<jsonh_token, std::string> number = read_number(number_builder);
+        if (number) {
+            // Try read quoteless string starting with number
+            std::string whitespace_chars;
+            if (detect_quoteless_string(whitespace_chars)) {
+                return read_quoteless_string(number.value().value + whitespace_chars);
+            }
+            // Otherwise, accept number
+            else {
+                return number;
+            }
+        }
+        // Read quoteless string starting with malformed number
+        else {
+            return read_quoteless_string(number_builder);
+        }
+    }
     nonstd::expected<jsonh_token, std::string> read_primitive_element() noexcept {
         // Peek rune
         std::optional<std::string> next = peek();
@@ -30824,7 +30875,7 @@ private:
         }
 
         // Number
-        if ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".") {
+        if (next && ((next.value() >= "0" && next.value() <= "9") || (next.value() == "-" || next.value() == "+") || next.value() == ".")) {
             return read_number_or_quoteless_string();
         }
         // String
@@ -30864,14 +30915,14 @@ private:
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
 
-        // Hash-styled comment
+        // Hash-style comment
         if (read_one("#")) {
         }
         else if (read_one("/")) {
-            // Line-styled comment
+            // Line-style comment
             if (read_one("/")) {
             }
-            // Block-styled comment
+            // Block-style comment
             else if (read_one("*")) {
                 block_comment = true;
             }
@@ -31020,6 +31071,8 @@ private:
         }
     }
     nonstd::expected<std::string, std::string> read_hex_escape_sequence(size_t length) noexcept {
+        // This method is used to combine escaped UTF-16 surrogate pairs (e.g. "\uD83D\uDC7D" -> "👽")
+
         // Read hex digits & convert to uint
         nonstd::expected<unsigned int, std::string> code_point = read_hex_sequence(length);
         if (!code_point) {
