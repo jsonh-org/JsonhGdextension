@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.10
+// Version: 4.12
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -30713,14 +30713,17 @@ private:
         // Read base
         std::string base_digits = "0123456789";
         bool has_base_specifier = false;
+        bool has_leading_zero = false;
         if (read_one("0")) {
             number_builder += '0';
+            has_leading_zero = true;
 
             std::optional<std::string> hex_base_char = read_any({ "x", "X" });
             if (hex_base_char) {
                 number_builder += hex_base_char.value();
                 base_digits = "0123456789abcdef";
                 has_base_specifier = true;
+                has_leading_zero = false;
             }
             else {
                 std::optional<std::string> binary_base_char = read_any({ "b", "B" });
@@ -30728,6 +30731,7 @@ private:
                     number_builder += binary_base_char.value();
                     base_digits = "01";
                     has_base_specifier = true;
+                    has_leading_zero = false;
                 }
                 else {
                     std::optional<std::string> octal_base_char = read_any({ "o", "O" });
@@ -30735,26 +30739,32 @@ private:
                         number_builder += octal_base_char.value();
                         base_digits = "01234567";
                         has_base_specifier = true;
+                        has_leading_zero = false;
                     }
                 }
             }
         }
 
         // Read main number
-        nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
+        nonstd::expected<void, std::string> main_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier, has_leading_zero);
         if (!main_result) {
             return nonstd::unexpected<std::string>(main_result.error());
         }
 
-        // Hexadecimal exponent
+        // Possible hexadecimal exponent
         if (number_builder.back() == 'e' || number_builder.back() == 'E') {
-            // Read sign
+            // Read sign (mandatory)
             std::optional<std::string> exponent_sign = read_any({ "+", "-" });
             if (exponent_sign) {
                 number_builder += exponent_sign.value();
 
+                // Missing digit between base specifier and exponent (e.g. `0xe+`)
+                if (has_base_specifier && number_builder.size() == 4) {
+                    return nonstd::unexpected<std::string>("Missing digit between base specifier and exponent");
+                }
+
                 // Read exponent number
-                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
+                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
                 if (!exponent_result) {
                     return nonstd::unexpected<std::string>(exponent_result.error());
                 }
@@ -30773,7 +30783,7 @@ private:
                 }
 
                 // Read exponent number
-                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits, has_base_specifier);
+                nonstd::expected<void, std::string> exponent_result = read_number_no_exponent(number_builder, base_digits);
                 if (!exponent_result) {
                     return nonstd::unexpected<std::string>(exponent_result.error());
                 }
@@ -30783,7 +30793,7 @@ private:
         // End of number
         return jsonh_token(json_token_type::number, number_builder);
     }
-    nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier) noexcept {
+    nonstd::expected<void, std::string> read_number_no_exponent(std::string& number_builder, std::string_view base_digits, bool has_base_specifier = false, bool has_leading_zero = false) noexcept {
         // Leading underscore
         if (!has_base_specifier && peek() == "_") {
             return nonstd::unexpected<std::string>("Leading `_` in number");
@@ -30791,6 +30801,11 @@ private:
 
         bool is_fraction = false;
         bool is_empty = true;
+
+        // Leading zero (not base specifier)
+        if (has_leading_zero) {
+            is_empty = false;
+        }
 
         while (true) {
             // Peek rune
