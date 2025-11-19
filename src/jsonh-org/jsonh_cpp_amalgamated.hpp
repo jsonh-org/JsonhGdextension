@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 5.0
+// Version: 5.1
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -30667,7 +30667,7 @@ private:
         return jsonh_token(json_token_type::string, string_builder);
     }
     nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "", bool is_verbatim = false) noexcept {
-        bool is_named_literal_possible = true;
+        bool is_named_literal_possible = !is_verbatim;
 
         // Read quoteless string
         std::string string_builder = initial_chars;
