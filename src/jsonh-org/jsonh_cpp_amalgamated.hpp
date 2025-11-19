@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 4.12
+// Version: 5.0
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -32,7 +32,7 @@
 #define NONSTD_EXPECTED_LITE_HPP
 
 #define expected_lite_MAJOR  0
-#define expected_lite_MINOR  9
+#define expected_lite_MINOR  10
 #define expected_lite_PATCH  0
 
 #define expected_lite_VERSION  expected_STRINGIFY(expected_lite_MAJOR) "." expected_STRINGIFY(expected_lite_MINOR) "." expected_STRINGIFY(expected_lite_PATCH)
@@ -2749,7 +2749,7 @@ private:
 /// class expected, void specialization
 
 template< typename E >
-class expected< void, E >
+class nsel_NODISCARD expected< void, E >
 {
 private:
     template< typename, typename > friend class expected;
@@ -3664,7 +3664,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 /****************************************************************************\
@@ -3698,7 +3698,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <utility>
@@ -3709,7 +3709,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // This file contains all macro definitions affecting or depending on the ABI
@@ -3820,7 +3820,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <algorithm> // transform
@@ -3841,7 +3841,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef> // nullptr_t
@@ -3859,7 +3859,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <array> // array
@@ -3873,7 +3873,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <utility> // declval, pair
@@ -3883,7 +3883,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <type_traits>
@@ -3894,7 +3894,7 @@ nsel_RESTORE_WARNINGS()
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -3976,12 +3976,13 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
-// SPDX-FileCopyrightText: 2016 - 2021 Evan Nemerson <evan@nemerson.com>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2016-2021 Evan Nemerson <evan@nemerson.com>
 // SPDX-License-Identifier: MIT
 
 /* Hedley - https://nemequ.github.io/hedley
  * Created by Evan Nemerson <evan@nemerson.com>
+ * SPDX-License-Identifier: CC0-1.0
  */
 
 #if !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < 15)
@@ -6712,7 +6713,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -6784,7 +6785,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef> // size_t
@@ -6823,7 +6824,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2018 The Abseil Authors
 // SPDX-License-Identifier: MIT
 
@@ -6994,7 +6995,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <limits> // numeric_limits
@@ -7011,7 +7012,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <iterator> // random_access_iterator_tag
@@ -7076,7 +7077,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -7093,7 +7094,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -7114,7 +7115,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -7746,14 +7747,29 @@ struct is_specialization_of<Primary, Primary<Args...>> : std::true_type {};
 template<typename T>
 using is_json_pointer = is_specialization_of<::nlohmann::json_pointer, uncvref_t<T>>;
 
+// checks if B is a json_pointer<A>
+template <typename A, typename B>
+struct is_json_pointer_of : std::false_type {};
+
+template <typename A>
+struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>> : std::true_type {};
+
+template <typename A>
+struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>&> : std::true_type {};
+
 // checks if A and B are comparable using Compare functor
 template<typename Compare, typename A, typename B, typename = void>
 struct is_comparable : std::false_type {};
 
+// We exclude json_pointer here, because the checks using Compare(A, B) will
+// use json_pointer::operator string_t() which triggers a deprecation warning
+// for GCC. See https://github.com/nlohmann/json/issues/4621. The call to
+// is_json_pointer_of can be removed once the deprecated function has been
+// removed.
 template<typename Compare, typename A, typename B>
-struct is_comparable<Compare, A, B, void_t<
-decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
-decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
+struct is_comparable < Compare, A, B, enable_if_t < !is_json_pointer_of<A, B>::value
+&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
+&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))>::value
 >> : std::true_type {};
 
 template<typename T>
@@ -7987,7 +8003,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstring> // strlen
@@ -8403,7 +8419,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -8424,7 +8440,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -9012,7 +9028,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -9037,7 +9053,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef> // size_t
@@ -9059,7 +9075,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef> // size_t
@@ -9815,7 +9831,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstdint> // uint8_t, uint64_t
@@ -9924,7 +9940,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstdint> // uint8_t
@@ -10054,7 +10070,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <algorithm> // generate_n
@@ -10081,7 +10097,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <array> // array
@@ -10634,7 +10650,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef>
@@ -10651,7 +10667,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <array> // array
@@ -13272,7 +13288,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstdint> // size_t
@@ -16489,7 +16505,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cmath> // isfinite
@@ -17032,7 +17048,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -17043,7 +17059,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef> // ptrdiff_t
@@ -17198,7 +17214,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
@@ -17966,7 +17982,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <cstddef> // ptrdiff_t
@@ -18098,7 +18114,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <type_traits> // conditional, is_same
@@ -18137,7 +18153,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <algorithm> // all_of
@@ -19129,7 +19145,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <initializer_list>
@@ -19220,7 +19236,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <algorithm> // reverse
@@ -19244,7 +19260,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <algorithm> // copy
@@ -21233,8 +21249,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2008 - 2009 Björn Hoehrmann <bjoern@hoehrmann.de>
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2008, 2009 Björn Hoehrmann <bjoern@hoehrmann.de>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <algorithm> // reverse, remove, fill, find, none_of
@@ -21257,7 +21273,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <array> // array
@@ -23348,7 +23364,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <functional> // equal_to, less
@@ -28914,25 +28930,43 @@ inline namespace json_literals
 /// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
 JSON_HEDLEY_NON_NULL(1)
 #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-    inline nlohmann::json operator ""_json(const char* s, std::size_t n)
+    inline nlohmann::json operator""_json(const char* s, std::size_t n)
 #else
-    inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+    // GCC 4.8 requires a space between "" and suffix
+    inline nlohmann::json operator"" _json(const char* s, std::size_t n)
 #endif
 {
     return nlohmann::json::parse(s, s + n);
 }
 
+#if defined(__cpp_char8_t)
+JSON_HEDLEY_NON_NULL(1)
+inline nlohmann::json operator""_json(const char8_t* s, std::size_t n)
+{
+    return nlohmann::json::parse(reinterpret_cast<const char*>(s),
+                                 reinterpret_cast<const char*>(s) + n);
+}
+#endif
+
 /// @brief user-defined string literal for JSON pointer
 /// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
 JSON_HEDLEY_NON_NULL(1)
 #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-    inline nlohmann::json::json_pointer operator ""_json_pointer(const char* s, std::size_t n)
+    inline nlohmann::json::json_pointer operator""_json_pointer(const char* s, std::size_t n)
 #else
-    inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+    // GCC 4.8 requires a space between "" and suffix
+    inline nlohmann::json::json_pointer operator"" _json_pointer(const char* s, std::size_t n)
 #endif
 {
     return nlohmann::json::json_pointer(std::string(s, n));
 }
+
+#if defined(__cpp_char8_t)
+inline nlohmann::json::json_pointer operator""_json_pointer(const char8_t* s, std::size_t n)
+{
+    return nlohmann::json::json_pointer(std::string(reinterpret_cast<const char*>(s), n));
+}
+#endif
 
 }  // namespace json_literals
 }  // namespace literals
@@ -28994,11 +29028,12 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 
 #if JSON_USE_GLOBAL_UDLS
     #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-        using nlohmann::literals::json_literals::operator ""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator ""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+        using nlohmann::literals::json_literals::operator""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+        using nlohmann::literals::json_literals::operator""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
     #else
-        using nlohmann::literals::json_literals::operator "" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator "" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+        // GCC 4.8 requires a space between "" and suffix
+        using nlohmann::literals::json_literals::operator"" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+        using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
     #endif
 #endif
 
@@ -29008,7 +29043,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // restore clang diagnostic settings
@@ -29053,7 +29088,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #undef JSON_HEDLEY_ALWAYS_INLINE
@@ -29338,6 +29373,10 @@ enum struct jsonh_version {
     /// Version 1 of the specification, released 2025/03/19.
     /// </summary>
     v1 = 1,
+    /// <summary>
+    /// Version 2 of the specification, released 2025/11/19.
+    /// </summary>
+    v2 = 2,
 };
 
 }
@@ -29363,6 +29402,18 @@ struct jsonh_reader_options {
     /// Only some tokens can be incomplete in this mode, so it should not be relied upon.
     /// </summary>
     bool incomplete_inputs = false;
+
+    /// <summary>
+    /// Returns whether <see cref="version"/> is greater than or equal to <paramref name="minimum_version"/>.
+    /// </summary>
+    bool supports_version(jsonh_version minimum_version) const noexcept {
+        const jsonh_version latest_version = jsonh_version::v2;
+
+        jsonh_version options_version = version == jsonh_version::latest ? latest_version : version;
+        jsonh_version given_version = minimum_version == jsonh_version::latest ? latest_version : minimum_version;
+
+        return options_version >= given_version;
+    }
 };
 
 }
@@ -29812,40 +29863,40 @@ public:
     /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
     /// </summary>
     template <typename T>
-    static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
-        return jsonh_reader(std::move(stream)).parse_element<T>();
+    static nonstd::expected<T, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+        return jsonh_reader(std::move(stream), options).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
     /// </summary>
-    static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream) noexcept {
-        return jsonh_reader(std::move(stream)).parse_element();
+    static nonstd::expected<json, std::string> parse_element(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+        return jsonh_reader(std::move(stream), options).parse_element();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream and deserializes it as <typeparamref name="T"/>.
     /// </summary>
     template <typename T>
-    static nonstd::expected<T, std::string> parse_element(std::istream& stream) noexcept {
-        return jsonh_reader(stream).parse_element<T>();
+    static nonstd::expected<T, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+        return jsonh_reader(stream, options).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 input stream.
     /// </summary>
-    static nonstd::expected<json, std::string> parse_element(std::istream& stream) noexcept {
-        return jsonh_reader(stream).parse_element();
+    static nonstd::expected<json, std::string> parse_element(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+        return jsonh_reader(stream, options).parse_element();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string and deserializes it as <typeparamref name="T"/>.
     /// </summary>
     template <typename T>
-    static nonstd::expected<T, std::string> parse_element(const std::string& string) noexcept {
-        return jsonh_reader(string).parse_element<T>();
+    static nonstd::expected<T, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+        return jsonh_reader(string, options).parse_element<T>();
     }
     /// <summary>
     /// Parses a single element from a UTF-8 string.
     /// </summary>
-    static nonstd::expected<json, std::string> parse_element(const std::string& string) noexcept {
-        return jsonh_reader(string).parse_element();
+    static nonstd::expected<json, std::string> parse_element(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept {
+        return jsonh_reader(string, options).parse_element();
     }
 
     /// <summary>
@@ -30125,7 +30176,15 @@ private:
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings.
     /// </summary>
-    const std::set<std::string> reserved_runes = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
+    const std::set<std::string> reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
+    /// <summary>
+    /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
+    /// </summary>
+    const std::set<std::string> reserved_runes_v1 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'" };
+    /// <summary>
+    /// Runes that cannot be used unescaped in quoteless strings in JSONH V2.
+    /// </summary>
+    const std::set<std::string> reserved_runes_v2 = { "\\", ",", ":", "[", "]", "{", "}", "/", "#", "\"", "'", "@" };
     /// <summary>
     /// Runes that are considered newlines.
     /// </summary>
@@ -30404,10 +30463,22 @@ private:
         return tokens;
     }
     nonstd::expected<jsonh_token, std::string> read_string() noexcept {
+        // Verbatim
+        bool is_verbatim = false;
+        if (options.supports_version(jsonh_version::v2) && read_one("@")) {
+            is_verbatim = true;
+
+            // Ensure string immediately follows verbatim symbol
+            std::optional<std::string> next = peek();
+            if (!next || next.value() == "#" || next.value() == "/" || whitespace_runes.contains(next.value())) {
+                return nonstd::unexpected<std::string>("Expected string to immediately follow verbatim symbol");
+            }
+        }
+
         // Start quote
         std::optional<std::string> start_quote = read_any({ "\"", "'" });
         if (!start_quote) {
-            return read_quoteless_string();
+            return read_quoteless_string("", is_verbatim);
         }
         char start_quote_char = start_quote.value()[0];
 
@@ -30449,11 +30520,16 @@ private:
             }
             // Escape sequence
             else if (next.value() == "\\") {
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
-                if (!escape_sequence_result) {
-                    return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                if (is_verbatim) {
+                    string_builder += next.value();
                 }
-                string_builder += escape_sequence_result.value();
+                else {
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    if (!escape_sequence_result) {
+                        return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                    }
+                    string_builder += escape_sequence_result.value();
+                }
             }
             // Literal character
             else {
@@ -30590,7 +30666,7 @@ private:
         // End of string
         return jsonh_token(json_token_type::string, string_builder);
     }
-    nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "") noexcept {
+    nonstd::expected<jsonh_token, std::string> read_quoteless_string(const std::string& initial_chars = "", bool is_verbatim = false) noexcept {
         bool is_named_literal_possible = true;
 
         // Read quoteless string
@@ -30606,15 +30682,20 @@ private:
             // Escape sequence
             if (next.value() == "\\") {
                 read();
-                nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
-                if (!escape_sequence_result) {
-                    return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                if (is_verbatim) {
+                    string_builder += next.value();
                 }
-                string_builder += escape_sequence_result.value();
+                else {
+                    nonstd::expected<std::string, std::string> escape_sequence_result = read_escape_sequence();
+                    if (!escape_sequence_result) {
+                        return nonstd::unexpected<std::string>(escape_sequence_result.error());
+                    }
+                    string_builder += escape_sequence_result.value();
+                }
                 is_named_literal_possible = false;
             }
             // End on reserved character
-            else if (reserved_runes.contains(next.value())) {
+            else if (reserved_runes().contains(next.value())) {
                 break;
             }
             // End on newline
@@ -30701,7 +30782,7 @@ private:
 
         // Found quoteless string if found backslash or non-reserved char
         std::optional<std::string> next_char = peek();
-        return next_char && (next_char.value() == "\\" || !reserved_runes.contains(next_char.value()));
+        return next_char && (next_char.value() == "\\" || !reserved_runes().contains(next_char.value()));
     }
     nonstd::expected<jsonh_token, std::string> read_number(std::string& number_builder) noexcept {
         // Read sign
@@ -30894,7 +30975,7 @@ private:
             return read_number_or_quoteless_string();
         }
         // String
-        else if (next.value() == "\"" || next.value() == "'") {
+        else if (next.value() == "\"" || next.value() == "'" || (options.supports_version(jsonh_version::v2) && next.value() == "@")) {
             return read_string();
         }
         // Quoteless string (or named literal)
@@ -30929,6 +31010,7 @@ private:
     }
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
+        int start_nest_counter = 0;
 
         // Hash-style comment
         if (read_one("#")) {
@@ -30940,6 +31022,16 @@ private:
             // Block-style comment
             else if (read_one("*")) {
                 block_comment = true;
+            }
+            // Nestable block-style comment
+            else if (options.supports_version(jsonh_version::v2) && peek() == "=") {
+                block_comment = true;
+                while (read_one("=")) {
+                    start_nest_counter++;
+                }
+                if (!read_one("*")) {
+                    return nonstd::unexpected<std::string>("Expected `*` after start of nesting block comment");
+                }
             }
             else {
                 return nonstd::unexpected<std::string>("Unexpected `/`");
@@ -30961,9 +31053,30 @@ private:
                 if (!next) {
                     return nonstd::unexpected<std::string>("Expected end of block comment, got end of input");
                 }
+
                 // End of block comment
-                if (next.value() == "*" && read_one("/")) {
-                    return jsonh_token(json_token_type::comment, comment_builder);
+                if (next.value() == "*") {
+                    // End of nestable block comment
+                    if (options.supports_version(jsonh_version::v2)) {
+                        // Count nests
+                        int end_nest_counter = 0;
+                        while (end_nest_counter < start_nest_counter && read_one("=")) {
+                            end_nest_counter++;
+                        }
+                        // Partial end nestable block comment was actually part of comment
+                        if (end_nest_counter < start_nest_counter || peek() != "/") {
+                            comment_builder += "*";
+                            for (; end_nest_counter > 0; end_nest_counter--) {
+                                comment_builder += "=";
+                            }
+                            continue;
+                        }
+                    }
+
+                    // End of block comment
+                    if (read_one("/")) {
+                        return jsonh_token(json_token_type::comment, comment_builder);
+                    }
                 }
             }
             else {
