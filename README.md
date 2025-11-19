@@ -11,7 +11,7 @@ Since JSONH is compatible with JSON, any JSONH syntax can be represented with eq
 
 ## JsonhGdextension
 
-JsonhGdextension is a parser implementation of [JSONH v1](https://github.com/jsonh-org/Jsonh) for GDExtension using [JsonhCpp](https://github.com/jsonh-org/JsonhCpp).
+JsonhGdextension is a parser implementation of [JSONH V1 & V2](https://github.com/jsonh-org/Jsonh) for GDExtension using [JsonhCpp](https://github.com/jsonh-org/JsonhCpp).
 
 ## Example
 
@@ -56,7 +56,7 @@ print(value) # ["hello", "world"]
 
 - C++20
 - Godot 4.4
-- [jsonh-org/JsonhCpp](https://github.com/jsonh-org/JsonhCpp) (v5.0)
+- [jsonh-org/JsonhCpp](https://github.com/jsonh-org/JsonhCpp) (v5.1)
 
 ## Limitations
 
