@@ -3,6 +3,8 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/label.hpp>
 
+#include "jsonh_result.hpp"
+
 using namespace godot;
 
 namespace jsonh_gdextension {
@@ -16,16 +18,13 @@ public:
 	Jsonh();
 	~Jsonh();
 
-	Dictionary parse_element(const String& string) noexcept;
+	Ref<JsonhResult> parse_element(const String &string, const Dictionary &options = {}) noexcept;
 
 protected:
 	static void _bind_methods();
 
 private:
 	static Jsonh *singleton;
-
-	static Dictionary create_value_result(const Variant& value) noexcept;
-	static Dictionary create_error_result(const String& error) noexcept;
 };
 
 }

@@ -11,7 +11,7 @@ using namespace jsonh_gdextension;
 Jsonh *Jsonh::singleton = nullptr;
 
 void Jsonh::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("parse_element", "string"), &Jsonh::parse_element);
+	ClassDB::bind_method(D_METHOD("parse_element", "string", "options"), &Jsonh::parse_element, DEFVAL(Dictionary()));
 }
 
 Jsonh *Jsonh::get_singleton() {
@@ -28,7 +28,7 @@ Jsonh::~Jsonh() {
 	singleton = nullptr;
 }
 
-Dictionary Jsonh::parse_element(const String& string) noexcept {
+Ref<JsonhResult> Jsonh::parse_element(const String &string, const Dictionary &options) noexcept {
 	jsonh_reader reader(string.utf8().get_data());
 
 	std::stack<Variant> current_elements;
@@ -55,11 +55,11 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 		submit_element(element);
 		current_elements.push(element);
 	};
-	auto parse_next_element = [&]() -> Dictionary {
+	auto parse_next_element = [&]() -> Ref<JsonhResult> {
 		for (const nonstd::expected<jsonh_token, std::string> &token_result : reader.read_element()) {
 			// Check error
 			if (!token_result) {
-				return create_error_result(token_result.error().data());
+				return JsonhResult::from_error(token_result.error().data());
 			}
 			jsonh_token token = token_result.value();
 
@@ -68,7 +68,7 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 				case json_token_type::null: {
 					Variant element = Variant(nullptr);
 					if (submit_element(element)) {
-						return create_value_result(element);
+						return JsonhResult::from_value(element);
 					}
 					break;
 				}
@@ -76,7 +76,7 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 				case json_token_type::true_bool: {
 					Variant element = Variant(true);
 					if (submit_element(element)) {
-						return create_value_result(element);
+						return JsonhResult::from_value(element);
 					}
 					break;
 				}
@@ -84,7 +84,7 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 				case json_token_type::false_bool: {
 					Variant element = Variant(false);
 					if (submit_element(element)) {
-						return create_value_result(element);
+						return JsonhResult::from_value(element);
 					}
 					break;
 				}
@@ -92,7 +92,7 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 				case json_token_type::string: {
 					Variant element = Variant(token.value.data());
 					if (submit_element(element)) {
-						return create_value_result(element);
+						return JsonhResult::from_value(element);
 					}
 					break;
 				}
@@ -100,11 +100,11 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 				case json_token_type::number: {
 					nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
 					if (!result) {
-						return create_error_result(result.error().data());
+						return JsonhResult::from_error(result.error().data());
 					}
 					Variant element = Variant((double)result.value());
 					if (submit_element(element)) {
-						return create_value_result(element);
+						return JsonhResult::from_value(element);
 					}
 					break;
 				}
@@ -129,7 +129,7 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 					}
 					// Root element
 					else {
-						return create_value_result(current_elements.top());
+						return JsonhResult::from_value(current_elements.top());
 					}
 					break;
 				}
@@ -144,33 +144,22 @@ Dictionary Jsonh::parse_element(const String& string) noexcept {
 				}
 				// Not implemented
 				default: {
-					return create_error_result("Token type not implemented");
+					return JsonhResult::from_error("Token type not implemented");
 				}
 			}
 		}
 
 		// End of input
-		return create_error_result("Expected token, got end of input");
+		return JsonhResult::from_error("Expected token, got end of input");
 	};
 
 	// Parse next element
-	Dictionary next_element = parse_next_element();
+	Ref<JsonhResult> next_element = parse_next_element();
 
 	// Ensure exactly one element
 	if (reader.options.parse_single_element && reader.has_element()) {
-		return create_error_result("Expected single element");
+		return JsonhResult::from_error("Expected single element");
 	}
 
 	return next_element;
-}
-
-Dictionary Jsonh::create_value_result(const Variant& value) noexcept {
-	Dictionary result = {};
-	result["value"] = value;
-	return result;
-}
-Dictionary Jsonh::create_error_result(const String& error) noexcept {
-	Dictionary result = {};
-	result["error"] = error;
-	return result;
 }

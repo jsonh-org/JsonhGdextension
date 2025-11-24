@@ -12,11 +12,9 @@
 		<method name="parse_element">
 			<return type="Dictionary" />
 			<param index="0" name="string" type="String" />
+			<param index="1" name="options" type="Dictionary" />
 			<description>
 				Parses a JSONH document as a Variant.
-				Returns a dictionary with the following elements:
-				- [code]value[/code]: the value if successful.
-				- [code]error[/code]: the error string if unsuccessful.
 				Example:
 				[codeblock]
 				var jsonh:String = "[hello, world]"

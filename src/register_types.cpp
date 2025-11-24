@@ -6,6 +6,7 @@
 
 #include "register_types.h"
 #include "jsonh.hpp"
+#include "jsonh_result.hpp"
 
 using namespace godot;
 using namespace jsonh_gdextension;
@@ -21,6 +22,9 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 	ClassDB::register_class<Jsonh>();
 	_my_singleton = memnew(Jsonh);
 	Engine::get_singleton()->register_singleton("Jsonh", Jsonh::get_singleton());
+
+	// Register JsonhResult
+	ClassDB::register_class<JsonhResult>();
 }
 
 void uninitialize_gdextension_types(ModuleInitializationLevel p_level) {
