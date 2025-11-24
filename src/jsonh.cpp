@@ -29,125 +29,139 @@ Jsonh::~Jsonh() {
 }
 
 Dictionary Jsonh::parse_element(const String& string) noexcept {
-	std::stack<Variant> current_nodes;
+	jsonh_reader reader(string.utf8().get_data());
+
+	std::stack<Variant> current_elements;
 	std::optional<String> current_property_name;
 
-	auto submit_node = [&](Variant node) {
+	auto submit_element = [&](const Variant &element) -> bool {
 		// Root value
-		if (current_nodes.empty()) {
+		if (current_elements.empty()) {
 			return true;
 		}
 		// Array item
 		if (!current_property_name) {
-			((Array)current_nodes.top()).push_back(node);
+			((Array)current_elements.top()).push_back(element);
 			return false;
 		}
 		// Object property
 		else {
-			((Dictionary)current_nodes.top())[current_property_name.value()] = node;
+			((Dictionary)current_elements.top())[current_property_name.value()] = element;
 			current_property_name.reset();
 			return false;
 		}
 	};
-	auto start_node = [&](Variant node) {
-		submit_node(node);
-		current_nodes.push(node);
+	auto start_element = [&](const Variant &element) -> void {
+		submit_element(element);
+		current_elements.push(element);
+	};
+	auto parse_next_element = [&]() -> Dictionary {
+		for (const nonstd::expected<jsonh_token, std::string> &token_result : reader.read_element()) {
+			// Check error
+			if (!token_result) {
+				return create_error_result(token_result.error().data());
+			}
+			jsonh_token token = token_result.value();
+
+			switch (token.json_type) {
+				// Null
+				case json_token_type::null: {
+					Variant element = Variant(nullptr);
+					if (submit_element(element)) {
+						return create_value_result(element);
+					}
+					break;
+				}
+				// True
+				case json_token_type::true_bool: {
+					Variant element = Variant(true);
+					if (submit_element(element)) {
+						return create_value_result(element);
+					}
+					break;
+				}
+				// False
+				case json_token_type::false_bool: {
+					Variant element = Variant(false);
+					if (submit_element(element)) {
+						return create_value_result(element);
+					}
+					break;
+				}
+				// String
+				case json_token_type::string: {
+					Variant element = Variant(token.value.data());
+					if (submit_element(element)) {
+						return create_value_result(element);
+					}
+					break;
+				}
+				// Number
+				case json_token_type::number: {
+					nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+					if (!result) {
+						return create_error_result(result.error().data());
+					}
+					Variant element = Variant((double)result.value());
+					if (submit_element(element)) {
+						return create_value_result(element);
+					}
+					break;
+				}
+				// Start Object
+				case json_token_type::start_object: {
+					Variant element = Dictionary();
+					start_element(element);
+					break;
+				}
+				// Start Array
+				case json_token_type::start_array: {
+					Variant element = Array();
+					start_element(element);
+					break;
+				}
+				// End Object/Array
+				case json_token_type::end_object:
+				case json_token_type::end_array: {
+					// Nested element
+					if (current_elements.size() > 1) {
+						current_elements.pop();
+					}
+					// Root element
+					else {
+						return create_value_result(current_elements.top());
+					}
+					break;
+				}
+				// Property Name
+				case json_token_type::property_name: {
+					current_property_name = token.value.data();
+					break;
+				}
+				// Comment
+				case json_token_type::comment: {
+					break;
+				}
+				// Not implemented
+				default: {
+					return create_error_result("Token type not implemented");
+				}
+			}
+		}
+
+		// End of input
+		return create_error_result("Expected token, got end of input");
 	};
 
-	for (const nonstd::expected<jsonh_token, std::string>& token_result : jsonh_reader(string.utf8().get_data()).read_element()) {
-		// Check error
-		if (!token_result) {
-			return create_error_result(token_result.error().data());
-		}
-		jsonh_token token = token_result.value();
+	// Parse next element
+	Dictionary next_element = parse_next_element();
 
-		switch (token.json_type) {
-			// Null
-			case json_token_type::null: {
-				Variant node = Variant(nullptr);
-				if (submit_node(node)) {
-					return create_value_result(node);
-				}
-				break;
-			}
-			// True
-			case json_token_type::true_bool: {
-				Variant node = Variant(true);
-				if (submit_node(node)) {
-					return create_value_result(node);
-				}
-				break;
-			}
-			// False
-			case json_token_type::false_bool: {
-				Variant node = Variant(false);
-				if (submit_node(node)) {
-					return create_value_result(node);
-				}
-				break;
-			}
-			// String
-			case json_token_type::string: {
-				Variant node = Variant(token.value.data());
-				if (submit_node(node)) {
-					return create_value_result(node);
-				}
-				break;
-			}
-			// Number
-			case json_token_type::number: {
-				nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
-				if (!result) {
-					return create_error_result(result.error().data());
-				}
-				Variant node = Variant((double)result.value());
-				if (submit_node(node)) {
-					return create_value_result(node);
-				}
-				break;
-			}
-			// Start Object
-			case json_token_type::start_object: {
-				Variant node = Dictionary();
-				start_node(node);
-				break;
-			}
-			// Start Array
-			case json_token_type::start_array: {
-				Variant node = Array();
-				start_node(node);
-				break;
-			}
-			// End Object/Array
-			case json_token_type::end_object: case json_token_type::end_array: {
-				// Nested node
-				if (current_nodes.size() > 1) {
-					current_nodes.pop();
-				}
-				// Root node
-				else {
-					return create_value_result(current_nodes.top());
-				}
-				break;
-			}
-			// Property Name
-			case json_token_type::property_name: {
-				current_property_name = token.value.data();
-				break;
-			}
-			// Comment
-			case json_token_type::comment: {
-				break;
-			}
-			// Not implemented
-			default: {
-				return create_error_result("Token type not implemented");
-			}
-		}
+	// Ensure exactly one element
+	if (reader.options.parse_single_element && reader.has_element()) {
+		return create_error_result("Expected single element");
 	}
 
-	// End of input
-	return create_error_result("Expected token, got end of input");
+	return next_element;
 }
 
 Dictionary Jsonh::create_value_result(const Variant& value) noexcept {
