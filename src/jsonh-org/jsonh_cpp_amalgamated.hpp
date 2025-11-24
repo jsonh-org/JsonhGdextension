@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 5.1
+// Version: 5.4
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29402,6 +29402,15 @@ struct jsonh_reader_options {
     /// Only some tokens can be incomplete in this mode, so it should not be relied upon.
     /// </summary>
     bool incomplete_inputs = false;
+    /// <summary>
+    /// Enables/disables checks for exactly one element when parsing.
+    /// <code>
+    /// "cat"
+    /// "dog" // Error: Expected single element
+    /// </code>
+    /// This option does not apply when reading elements, only when parsing elements.
+    /// </summary>
+    bool parse_single_element = false;
 
     /// <summary>
     /// Returns whether <see cref="version"/> is greater than or equal to <paramref name="minimum_version"/>.
@@ -29645,19 +29654,19 @@ public:
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
-    utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
+    explicit utf8_reader(std::unique_ptr<std::istream> stream) noexcept {
         this->inner_stream = std::move(stream);
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 input stream.
     /// </summary>
-    utf8_reader(std::istream& stream) noexcept
+    explicit utf8_reader(std::istream& stream) noexcept
         : utf8_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads UTF-8 runes from a UTF-8 string.
     /// </summary>
-    utf8_reader(const std::string& string) noexcept
+    explicit utf8_reader(const std::string& string) noexcept
         : utf8_reader(std::make_unique<std::istringstream>(string)) {
     }
 
@@ -29807,7 +29816,7 @@ public:
     /// <summary>
     /// Returns whether the byte is the first (or only) byte of a UTF-8 rune as opposed to a continuation byte.
     /// </summary>
-    static bool is_utf8_first_byte(char byte) noexcept {
+    static constexpr bool is_utf8_first_byte(char byte) noexcept {
         return (byte & 0xC0) != 0x80;
     }
     /// <summary>
@@ -29816,7 +29825,7 @@ public:
     /// <returns>
     /// 1 or 2 or 3 or 4.
     /// </returns>
-    static int get_utf8_sequence_length(char first_byte) noexcept {
+    static constexpr int get_utf8_sequence_length(char first_byte) noexcept {
         // https://codegolf.stackexchange.com/a/173577
         return ((first_byte - 160) >> (20 - (first_byte / 16))) + 2;
     }
@@ -29842,20 +29851,20 @@ public:
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
-    jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(std::unique_ptr<std::istream> stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : utf8_reader(std::move(stream)) {
         this->options = options;
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 input stream.
     /// </summary>
-    jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(std::istream& stream, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::unique_ptr<std::istream>(&stream)) {
     }
     /// <summary>
     /// Constructs a reader that reads JSONH from a UTF-8 string.
     /// </summary>
-    jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
+    explicit jsonh_reader(const std::string& string, jsonh_reader_options options = jsonh_reader_options()) noexcept
         : jsonh_reader(std::make_unique<std::istringstream>(string), options) {
     }
 
@@ -29904,135 +29913,146 @@ public:
     /// </summary>
     template <typename T>
     nonstd::expected<T, std::string> parse_element() noexcept {
-        nonstd::expected<json, std::string> node = parse_element();
-        if (!node) {
-            return nonstd::unexpected<std::string>(node.error());
+        nonstd::expected<json, std::string> element = parse_element();
+        if (!element) {
+            return nonstd::unexpected<std::string>(element.error());
         }
-        return node.value().template get<T>();
+        return element.value().template get<T>();
     }
     /// <summary>
     /// Parses a single element from the reader.
     /// </summary>
     nonstd::expected<json, std::string> parse_element() noexcept {
-        std::stack<json> current_nodes;
+        std::stack<json> current_elements;
         std::optional<std::string> current_property_name;
 
-        auto submit_node = [&](const json& node) {
+        auto submit_element = [&](const json& element) -> bool {
             // Root value
-            if (current_nodes.empty()) {
+            if (current_elements.empty()) {
                 return true;
             }
             // Array item
             if (!current_property_name) {
-                current_nodes.top().push_back(node);
+                current_elements.top().push_back(element);
                 return false;
             }
             // Object property
             else {
-                current_nodes.top()[current_property_name.value()] = node;
+                current_elements.top()[current_property_name.value()] = element;
                 current_property_name.reset();
                 return false;
             }
         };
-        auto start_node = [&](const json& node) {
-            submit_node(node);
-            current_nodes.push(node);
+        auto start_element = [&](const json& element) -> void {
+            submit_element(element);
+            current_elements.push(element);
+        };
+        auto parse_next_element = [&]() -> nonstd::expected<json, std::string> {
+            for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+                // Check error
+                if (!token_result) {
+                    return nonstd::unexpected<std::string>(token_result.error());
+                }
+                jsonh_token token = token_result.value();
+
+                switch (token.json_type) {
+                    // Null
+                    case json_token_type::null: {
+                        json element = json(nullptr);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // True
+                    case json_token_type::true_bool: {
+                        json element = json(true);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // False
+                    case json_token_type::false_bool: {
+                        json element = json(false);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // String
+                    case json_token_type::string: {
+                        json element = json(token.value);
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // Number
+                    case json_token_type::number: {
+                        nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        if (!result) {
+                            return nonstd::unexpected<std::string>(result.error());
+                        }
+                        json element = json(result.value());
+                        if (submit_element(element)) {
+                            return element;
+                        }
+                        break;
+                    }
+                    // Start Object
+                    case json_token_type::start_object: {
+                        json element = json::object();
+                        start_element(element);
+                        break;
+                    }
+                    // Start Array
+                    case json_token_type::start_array: {
+                        json element = json::array();
+                        start_element(element);
+                        break;
+                    }
+                    // End Object/Array
+                    case json_token_type::end_object: case json_token_type::end_array: {
+                        // Nested element
+                        if (current_elements.size() > 1) {
+                            current_elements.pop();
+                        }
+                        // Root element
+                        else {
+                            return current_elements.top();
+                        }
+                        break;
+                    }
+                    // Property Name
+                    case json_token_type::property_name: {
+                        current_property_name = token.value;
+                        break;
+                    }
+                    // Comment
+                    case json_token_type::comment: {
+                        break;
+                    }
+                    // Not implemented
+                    default: {
+                        return nonstd::unexpected<std::string>("Token type not implemented");
+                    }
+                }
+            }
+
+            // End of input
+            return nonstd::unexpected<std::string>("Expected token, got end of input");
         };
 
-        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
-            // Check error
-            if (!token_result) {
-                return nonstd::unexpected<std::string>(token_result.error());
-            }
-            jsonh_token token = token_result.value();
+        // Parse next element
+        nonstd::expected<json, std::string> next_element = parse_next_element();
 
-            switch (token.json_type) {
-                // Null
-                case json_token_type::null: {
-                    json node = json(nullptr);
-                    if (submit_node(node)) {
-                        return node;
-                    }
-                    break;
-                }
-                // True
-                case json_token_type::true_bool: {
-                    json node = json(true);
-                    if (submit_node(node)) {
-                        return node;
-                    }
-                    break;
-                }
-                // False
-                case json_token_type::false_bool: {
-                    json node = json(false);
-                    if (submit_node(node)) {
-                        return node;
-                    }
-                    break;
-                }
-                // String
-                case json_token_type::string: {
-                    json node = json(token.value);
-                    if (submit_node(node)) {
-                        return node;
-                    }
-                    break;
-                }
-                // Number
-                case json_token_type::number: {
-                    nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
-                    if (!result) {
-                        return nonstd::unexpected<std::string>(result.error());
-                    }
-                    json node = json(result.value());
-                    if (submit_node(node)) {
-                        return node;
-                    }
-                    break;
-                }
-                // Start Object
-                case json_token_type::start_object: {
-                    json node = json::object();
-                    start_node(node);
-                    break;
-                }
-                // Start Array
-                case json_token_type::start_array: {
-                    json node = json::array();
-                    start_node(node);
-                    break;
-                }
-                // End Object/Array
-                case json_token_type::end_object: case json_token_type::end_array: {
-                    // Nested node
-                    if (current_nodes.size() > 1) {
-                        current_nodes.pop();
-                    }
-                    // Root node
-                    else {
-                        return current_nodes.top();
-                    }
-                    break;
-                }
-                // Property Name
-                case json_token_type::property_name: {
-                    current_property_name = token.value;
-                    break;
-                }
-                // Comment
-                case json_token_type::comment: {
-                    break;
-                }
-                // Not implemented
-                default: {
-                    return nonstd::unexpected<std::string>("Token type not implemented");
-                }
-            }
+        // Ensure exactly one element
+        if (options.parse_single_element && has_element()) {
+            return nonstd::unexpected<std::string>("Expected single element");
         }
 
-        // End of input
-        return nonstd::unexpected<std::string>("Expected token, got end of input");
+        return next_element;
     }
     /// <summary>
     /// Tries to find the given property name in the reader.<br/>
@@ -30085,6 +30105,13 @@ public:
 
         // Path not found
         return false;
+    }
+    /// <summary>
+    /// Reads comments and whitespace and returns whether the reader contains another element.
+    /// </summary>
+    bool has_element() {
+        read_comments_and_whitespace();
+        return !!peek();
     }
     /// <summary>
     /// Reads a single element from the reader.
@@ -30176,7 +30203,7 @@ private:
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings.
     /// </summary>
-    const std::set<std::string> reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
+    const std::set<std::string>& reserved_runes() { return options.supports_version(jsonh_version::v2) ? reserved_runes_v2 : reserved_runes_v1; }
     /// <summary>
     /// Runes that cannot be used unescaped in quoteless strings in JSONH V1.
     /// </summary>
@@ -31287,13 +31314,13 @@ private:
             return nonstd::unexpected<std::string>("Invalid code point (out of range)");
         }
     }
-    static unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
+    static constexpr unsigned int utf16_surrogates_to_code_point(unsigned int high_surrogate, unsigned int low_surrogate) noexcept {
         return 0x10000 + (((high_surrogate - 0xD800) << 10) | (low_surrogate - 0xDC00));
     }
-    static bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
+    static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static std::string to_ascii_lower(const char* string) noexcept {
+    static constexpr std::string to_ascii_lower(const char* string) noexcept {
         std::string result(string);
         for (char& next : result) {
             if (next <= 'Z' && next >= 'A') {
