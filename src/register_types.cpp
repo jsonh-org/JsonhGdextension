@@ -18,16 +18,16 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 		return;
 	}
 
-	// Register Jsonh singleton
-	ClassDB::register_class<Jsonh>();
-	_my_singleton = memnew(Jsonh);
-	Engine::get_singleton()->register_singleton("Jsonh", Jsonh::get_singleton());
-
 	// Register JsonhResult
 	ClassDB::register_class<JsonhResult>();
 
 	// Register JsonhOptions
 	ClassDB::register_class<JsonhOptions>();
+
+	// Register Jsonh singleton
+	ClassDB::register_class<Jsonh>();
+	_my_singleton = memnew(Jsonh);
+	Engine::get_singleton()->register_singleton("Jsonh", Jsonh::get_singleton());
 }
 
 void uninitialize_gdextension_types(ModuleInitializationLevel p_level) {
