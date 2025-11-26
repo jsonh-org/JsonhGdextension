@@ -27,8 +27,8 @@ Jsonh::~Jsonh() {
 	singleton = nullptr;
 }
 
-Ref<JsonhResult> Jsonh::parse_element(const String &string, const Dictionary &options) noexcept {
-	jsonh_reader reader(string.utf8().get_data());
+Ref<JsonhResult> Jsonh::parse_element(const String &string, const JsonhOptions &options) noexcept {
+	jsonh_reader reader(string.utf8().get_data(), options.reader_options);
 
 	std::stack<Variant> current_elements;
 	std::optional<String> current_property_name;

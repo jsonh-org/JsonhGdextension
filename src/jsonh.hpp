@@ -5,6 +5,7 @@
 
 #include "jsonh-org/jsonh_cpp_amalgamated.hpp"
 #include "jsonh_result.hpp"
+#include "jsonh_options.hpp"
 
 using namespace godot;
 
@@ -19,7 +20,7 @@ public:
 	Jsonh();
 	~Jsonh();
 
-	Ref<JsonhResult> parse_element(const String &string, const Dictionary &options = {}) noexcept;
+	Ref<JsonhResult> parse_element(const String &string, const JsonhOptions &options = {}) noexcept;
 
 protected:
 	static void _bind_methods();
