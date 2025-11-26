@@ -15,10 +15,10 @@ void JsonhResult::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_error"), &JsonhResult::get_error);
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "error"), StringName(), "get_error");
 
-	ClassDB::bind_method(D_METHOD("is_error"), &JsonhResult::get_is_error);
+	ClassDB::bind_method(D_METHOD("get_is_error"), &JsonhResult::get_is_error);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "is_error"), StringName(), "get_is_error");
 
-	ClassDB::bind_method(D_METHOD("is_value"), &JsonhResult::get_is_value);
+	ClassDB::bind_method(D_METHOD("get_is_value"), &JsonhResult::get_is_value);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "is_value"), StringName(), "get_is_value");
 }
 
@@ -39,24 +39,18 @@ Ref<JsonhResult> JsonhResult::from_error(const String &error) noexcept {
 	return Ref<JsonhResult>(memnew(JsonhResult(Variant(), error, true)));
 }
 
-const Variant &JsonhResult::get_value() noexcept {
-	if (is_error) {
-		UtilityFunctions::push_error("Result was error");
-	}
+const Variant &JsonhResult::get_value() const noexcept {
 	return value;
 }
 
-const String &JsonhResult::get_error() noexcept {
-	if (!is_error) {
-		UtilityFunctions::push_error("Result was value");
-	}
+const String &JsonhResult::get_error() const noexcept {
 	return error;
 }
 
-bool JsonhResult::get_is_error() noexcept {
+bool JsonhResult::get_is_error() const noexcept {
 	return is_error;
 }
 
-bool JsonhResult::get_is_value() noexcept {
+bool JsonhResult::get_is_value() const noexcept {
 	return !is_error;
 }

@@ -16,22 +16,26 @@ class JsonhOptions : public Resource {
 public:
 	jsonh_reader_options reader_options = jsonh_reader_options();
 
-	JsonhOptions() noexcept;
-	JsonhOptions(jsonh_reader_options options) noexcept;
+	static Ref<JsonhOptions> create() noexcept;
 
-	jsonh_version get_version() noexcept;
-	void set_version(jsonh_version version) noexcept;
-	JsonhOptions with_version(jsonh_version version) const noexcept;
+	int get_version() const noexcept;
+	void set_version(int version) noexcept;
+	Ref<JsonhOptions> with_version(int version) const noexcept;
 
-	bool get_incomplete_inputs() noexcept;
+	bool get_incomplete_inputs() const noexcept;
 	void set_incomplete_inputs(bool incomplete_inputs) noexcept;
-	JsonhOptions with_incomplete_inputs(bool incomplete_inputs) const noexcept;
+	Ref<JsonhOptions> with_incomplete_inputs(bool incomplete_inputs) const noexcept;
 
-	bool get_parse_single_element() noexcept;
+	bool get_parse_single_element() const noexcept;
 	void set_parse_single_element(bool parse_single_element) noexcept;
-	JsonhOptions with_parse_single_element(bool parse_single_element) const noexcept;
+	Ref<JsonhOptions> with_parse_single_element(bool parse_single_element) const noexcept;
 
 protected:
 	static void _bind_methods();
+
+private:
+	JsonhOptions() noexcept;
+	JsonhOptions(jsonh_reader_options options) noexcept;
 };
+
 }

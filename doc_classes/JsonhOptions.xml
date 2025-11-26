@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="JsonhOptions" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Options for [Jsonh].
+	</brief_description>
+	<description>
+		The JsonhOptions class from [url="https://github.com/jsonh-org/JsonhGdextension"]JsonhGdExtension[/url] provides configuration for the [Jsonh] class.
+	</description>
+    <constants>
+        <constant name="JSONH_VERSION_LATEST" value="0" enum="JsonhVersion">
+            Indicates that the latest version should be used (currently [JSONH_VERSION_V1]).
+		</constant>
+        <constant name="JSONH_VERSION_V1" value="1" enum="JsonhVersion">
+            Version 1 of the specification, released 2025/03/19.
+		</constant>
+        <constant name="JSONH_VERSION_V2" value="2" enum="JsonhVersion">
+            Version 2 of the specification, released 2025/11/19.
+		</constant>
+    </constants>
+    <members>
+		<member name="version" type="int" getter="get_version" setter="set_version" enum="JsonhVersion">
+			Specifies the major version of the JSONH specification to use.
+		</member>
+		<member name="incomplete_inputs" type="bool" getter="get_incomplete_inputs" setter="set_incomplete_inputs">
+			Enables/disables parsing unclosed inputs.
+            [codeblock]
+            {
+              "key": "val
+            [/codeblock]
+            This is potentially useful for large language models that stream responses.
+            Only some tokens can be incomplete in this mode, so it should not be relied upon.
+		</member>
+		<member name="parse_single_element" type="bool" getter="get_parse_single_element" setter="set_parse_single_element">
+			Enables/disables checks for exactly one element when parsing.
+            [codeblock]
+            "cat"
+            "dog" // Error: Expected single element
+            [/codeblock]
+            This option does not apply when reading elements, only when parsing elements.
+		</member>
+    </members>
+	<methods>
+		<method name="with_version">
+			<return type="JsonhOptions" />
+			<param index="0" name="version" type="int" enum="JsonhVersion" />
+			<description>
+				Specifies the major version of the JSONH specification to use.
+			</description>
+		</method>
+		<method name="with_incomplete_inputs">
+			<return type="JsonhOptions" />
+			<param index="0" name="incomplete_inputs" type="bool" />
+			<description>
+				Enables/disables parsing unclosed inputs.
+                [codeblock]
+                {
+                  "key": "val
+                [/codeblock]
+                This is potentially useful for large language models that stream responses.
+                Only some tokens can be incomplete in this mode, so it should not be relied upon.
+			</description>
+		</method>
+		<method name="with_parse_single_element">
+			<return type="JsonhOptions" />
+			<param index="0" name="parse_single_element" type="bool" />
+			<description>
+				Enables/disables checks for exactly one element when parsing.
+                [codeblock]
+                "cat"
+                "dog" // Error: Expected single element
+                [/codeblock]
+                This option does not apply when reading elements, only when parsing elements.
+			</description>
+		</method>
+	</methods>
+</class>

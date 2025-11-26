@@ -25,6 +25,9 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 
 	// Register JsonhResult
 	ClassDB::register_class<JsonhResult>();
+
+	// Register JsonhOptions
+	ClassDB::register_class<JsonhOptions>();
 }
 
 void uninitialize_gdextension_types(ModuleInitializationLevel p_level) {

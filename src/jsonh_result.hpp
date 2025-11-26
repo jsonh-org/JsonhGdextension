@@ -13,13 +13,13 @@ class JsonhResult : public RefCounted {
 	GDCLASS(JsonhResult, RefCounted);
 
 public:
-	static Ref<JsonhResult> from_value(const Variant &value) noexcept;
+	static Ref<JsonhResult> from_value(const Variant &value = Variant()) noexcept;
 	static Ref<JsonhResult> from_error(const String &error) noexcept;
 
-	const Variant &get_value() noexcept;
-	const String &get_error() noexcept;
-	bool get_is_error() noexcept;
-	bool get_is_value() noexcept;
+	const Variant &get_value() const noexcept;
+	const String &get_error() const noexcept;
+	bool get_is_error() const noexcept;
+	bool get_is_value() const noexcept;
 
 protected:
 	static void _bind_methods();
@@ -32,4 +32,5 @@ private:
 	JsonhResult() noexcept;
 	JsonhResult(const Variant &value, const String &error, bool is_error) noexcept;
 };
+
 }

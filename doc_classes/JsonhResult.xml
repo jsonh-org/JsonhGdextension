@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="JsonhResult" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A result (value or error) for [Jsonh].
+	</brief_description>
+	<description>
+		The JsonhResult class from [url="https://github.com/jsonh-org/JsonhGdextension"]JsonhGdExtension[/url] provides a result (value or error) for the [Jsonh] class.
+	</description>
+    <members>
+		<member name="value" type="Variant" getter="get_version">
+			Returns the optional value or [code]null[/code].
+		</member>
+		<member name="error" type="String" getter="get_version">
+			Returns the error or [code]""[/code].
+		</member>
+		<member name="is_value" type="bool" getter="get_is_value">
+			Returns whether the result succeeded.
+		</member>
+		<member name="is_error" type="bool" getter="get_is_error">
+			Returns whether the result failed.
+		</member>
+    </members>
+	<methods>
+		<method name="from_value">
+			<return type="JsonhResult" />
+			<param index="0" name="value" type="Variant" />
+			<description>
+				Constructs a successful result from an optional value.
+			</description>
+		</method>
+		<method name="from_error">
+			<return type="JsonhResult" />
+			<param index="0" name="error" type="String" />
+			<description>
+				Constructs a failed result from an error.
+			</description>
+		</method>
+	</methods>
+</class>

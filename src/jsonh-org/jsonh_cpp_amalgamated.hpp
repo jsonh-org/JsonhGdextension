@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 5.5
+// Version: 5.6
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -29366,7 +29366,7 @@ namespace jsonh_cpp {
 /// </summary>
 enum struct jsonh_version {
     /// <summary>
-    /// Indicates that the latest version should be used (currently v1).
+    /// Indicates that the latest version should be used (currently v2).
     /// </summary>
     latest = 0,
     /// <summary>
