@@ -14,7 +14,7 @@
 			<param index="0" name="string" type="String" />
 			<param index="1" name="options" type="Dictionary" />
 			<description>
-				Parses a JSONH document as a Variant.
+				Parses a JSONH element as a [Variant].
 				Example:
 				[codeblock]
 				var jsonh:String = "[hello, world]"
