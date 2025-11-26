@@ -10,7 +10,7 @@ using namespace jsonh_gdextension;
 Jsonh *Jsonh::singleton = nullptr;
 
 void Jsonh::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("parse_element", "string", "options"), &Jsonh::parse_element, DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("parse_element", "string", "options"), &Jsonh::parse_element, DEFVAL(JsonhOptions::create()));
 }
 
 Jsonh *Jsonh::get_singleton() {
