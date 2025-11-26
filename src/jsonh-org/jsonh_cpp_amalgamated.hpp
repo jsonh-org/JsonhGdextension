@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 5.4
+// Version: 5.5
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -30048,8 +30048,12 @@ public:
         nonstd::expected<json, std::string> next_element = parse_next_element();
 
         // Ensure exactly one element
-        if (options.parse_single_element && has_element()) {
-            return nonstd::unexpected<std::string>("Expected single element");
+        if (options.parse_single_element) {
+            for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
+                if (!token) {
+                    return nonstd::unexpected<std::string>(token.error());
+                }
+            }
         }
 
         return next_element;
@@ -30107,11 +30111,37 @@ public:
         return false;
     }
     /// <summary>
-    /// Reads comments and whitespace and returns whether the reader contains another element.
+    /// Reads whitespace and returns whether the reader contains another token.
     /// </summary>
-    bool has_element() {
-        read_comments_and_whitespace();
+    bool has_token() noexcept {
+        // Whitespace
+        read_whitespace();
+
+        // Peek char
         return !!peek();
+    }
+    /// <summary>
+    /// Reads comments and whitespace and errors if the reader contains another element.
+    /// </summary>
+    std::vector<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
+        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
+
+        // Comments & whitespace
+        for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
+            if (!token) {
+                tokens.push_back(token);
+                return tokens;
+            }
+            tokens.push_back(token);
+        }
+
+        // Peek char
+        if (!!peek()) {
+            tokens.push_back(nonstd::unexpected<std::string>("Expected end of elements"));
+            return tokens;
+        }
+
+        return tokens;
     }
     /// <summary>
     /// Reads a single element from the reader.
@@ -31320,7 +31350,7 @@ private:
     static constexpr bool is_utf16_high_surrogate(unsigned int code_point) noexcept {
         return code_point >= 0xD800 && code_point <= 0xDBFF;
     }
-    static constexpr std::string to_ascii_lower(const char* string) noexcept {
+    static std::string to_ascii_lower(const char* string) noexcept {
         std::string result(string);
         for (char& next : result) {
             if (next <= 'Z' && next >= 'A') {
