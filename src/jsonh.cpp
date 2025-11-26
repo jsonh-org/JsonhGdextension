@@ -156,8 +156,12 @@ Ref<JsonhResult> Jsonh::parse_element(const String &string, const Dictionary &op
 	Ref<JsonhResult> next_element = parse_next_element();
 
 	// Ensure exactly one element
-	if (reader.options.parse_single_element && reader.has_element()) {
-		return JsonhResult::from_error("Expected single element");
+	if (reader.options.parse_single_element) {
+		for (const nonstd::expected<jsonh_token, std::string> &token : reader.read_end_of_elements()) {
+			if (!token) {
+				return JsonhResult::from_error(token.error().data());
+			}
+		}
 	}
 
 	return next_element;
