@@ -63,7 +63,6 @@ jobs:
         uses: ./godot-cpp/.github/actions/setup-godot-cpp
         with:
           platform: ${{ matrix.target.platform }}
-          em-version: 4.0.20
 
       # Build GDExtension (with caches)
 
