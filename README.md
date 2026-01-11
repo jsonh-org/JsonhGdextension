@@ -55,7 +55,7 @@ print(value) # ["hello", "world"]
 ## Dependencies
 
 - C++20
-- Godot 4.4
+- Godot 4.4+
 - [jsonh-org/JsonhCpp](https://github.com/jsonh-org/JsonhCpp) (v5.8)
 
 ## Limitations
