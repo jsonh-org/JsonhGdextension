@@ -1,7 +1,6 @@
 #pragma once
 
 #include <godot_cpp/classes/object.hpp>
-#include <godot_cpp/classes/label.hpp>
 
 #include "jsonh-org/jsonh_cpp_amalgamated.hpp"
 #include "jsonh_result.hpp"
