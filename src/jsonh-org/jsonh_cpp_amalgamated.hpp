@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 6.1
+// Version: 6.2
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -11634,6 +11634,8 @@ class lexer : public lexer_base<BasicJsonType>
                             break;
                     }
                 }
+
+                JSON_HEDLEY_UNREACHABLE();
             }
 
             // multi-line comments skip input until */ is read
@@ -11669,6 +11671,8 @@ class lexer : public lexer_base<BasicJsonType>
                             continue;
                     }
                 }
+
+                JSON_HEDLEY_UNREACHABLE();
             }
 
             // unexpected character after reading '/'
@@ -30215,10 +30219,12 @@ public:
         nonstd::expected<json, std::string> next_element = parse_next_element();
 
         // Ensure exactly one element
-        if (options.parse_single_element) {
-            for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
-                if (!token) {
-                    return nonstd::unexpected<std::string>(token.error());
+        if (next_element) {
+            if (options.parse_single_element) {
+                for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
+                    if (!token) {
+                        return nonstd::unexpected<std::string>(token.error());
+                    }
                 }
             }
         }
