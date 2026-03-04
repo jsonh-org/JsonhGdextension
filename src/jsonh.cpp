@@ -11,6 +11,7 @@ Jsonh *Jsonh::singleton = nullptr;
 
 void Jsonh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("parse_element", "string", "options"), &Jsonh::parse_element, DEFVAL(JsonhOptions::create()));
+	ClassDB::bind_method(D_METHOD("parse_json", "string", "include_comments", "options"), &Jsonh::parse_element, DEFVAL(false), DEFVAL(JsonhOptions::create()));
 }
 
 Jsonh *Jsonh::get_singleton() {
@@ -165,4 +166,16 @@ Ref<JsonhResult> Jsonh::parse_element(const String &string, const Ref<JsonhOptio
 	}
 
 	return next_element;
+}
+
+Ref<JsonhResult> Jsonh::parse_json(const String &string, bool include_comments, const Ref<JsonhOptions> &options) const noexcept {
+	jsonh_reader reader(string.utf8().get_data(), options->reader_options);
+
+	nonstd::expected<std::string, std::string> result = reader.parse_json(include_comments);
+	if (!result) {
+		return JsonhResult::from_error(result.error().data());
+	}
+
+	Variant element = Variant(result.value().data());
+	return JsonhResult::from_value(element);
 }

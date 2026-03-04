@@ -21,5 +21,20 @@
 				[/codeblock]
 			</description>
 		</method>
+		<method name="parse_json">
+			<return type="JsonhResult" />
+			<param index="0" name="string" type="String" />
+			<param index="1" name="include_comments" type="bool" />
+			<param index="2" name="options" type="JsonhOptions" />
+			<description>
+				Parses a JSONH element as minified JSON.
+				Example:
+				[codeblock]
+				var jsonh:String = "[hello, world]"
+				var json:String = Jsonh.parse_json(jsonh).value
+				print(value) # ["hello","world"]
+				[/codeblock]
+			</description>
+		</method>
 	</methods>
 </class>
