@@ -11,7 +11,7 @@ Jsonh *Jsonh::singleton = nullptr;
 
 void Jsonh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("parse_element", "string", "options"), &Jsonh::parse_element, DEFVAL(JsonhOptions::create()));
-	ClassDB::bind_method(D_METHOD("parse_json", "string", "include_comments", "options"), &Jsonh::parse_element, DEFVAL(false), DEFVAL(JsonhOptions::create()));
+	ClassDB::bind_method(D_METHOD("parse_json", "string", "include_comments", "options"), &Jsonh::parse_json, DEFVAL(false), DEFVAL(JsonhOptions::create()));
 }
 
 Jsonh *Jsonh::get_singleton() {
