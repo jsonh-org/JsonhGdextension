@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 7.2
+// Version: 8.0
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -31058,9 +31058,11 @@ public:
      *
      * If @c include_comments is true, comments are included (@c / @c * and @c * @c / are escaped).
      *
+     * If @c indent is not null, the output is pretty-printed with the given indentation.
+     *
      * The result is not safe to embed in HTML.
      */
-    nonstd::expected<std::string, std::string> parse_json(bool include_comments = false) noexcept {
+    nonstd::expected<std::string, std::string> parse_json(bool include_comments = false, std::optional<std::string> indent = std::nullopt) noexcept {
         int64_t current_depth = 0;
         bool is_start_of_structure = true;
         bool is_property_value = false;
@@ -31074,19 +31076,48 @@ public:
             }
             jsonh_token token = token_result.value();
 
-            if (token.json_type == json_token_type::null || token.json_type == json_token_type::true_bool || token.json_type == json_token_type::false_bool || token.json_type == json_token_type::string || token.json_type == json_token_type::number || token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array || token.json_type == json_token_type::property_name) {
-                if (!is_property_value) {
-                    if (!is_start_of_structure) {
+            // Add comments and indents
+            if (!is_property_value) {
+                // Add comma before property/item
+                if ((token.json_type != json_token_type::none && token.json_type != json_token_type::comment) && current_depth > 0 && !is_start_of_structure) {
+                    // Don't add trailing comma
+                    if (token.json_type != json_token_type::end_object && token.json_type != json_token_type::end_array) {
                         result_builder.push_back(',');
                     }
-                    is_start_of_structure = false;
                 }
+
+                // Apply indentation
+                if (indent) {
+                    // Don't indent inside empty structures
+                    if (!((token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) && is_start_of_structure)) {
+                        // Don't indent comment if not included
+                        if (!(token.json_type == json_token_type::comment && !include_comments)) {
+                            // Don't indent root elements
+                            if (current_depth > 0) {
+                                // Add newline before element
+                                result_builder.push_back('\n');
+
+                                // Get current indent count
+                                int64_t indent_count = current_depth;
+                                if (token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) {
+                                    indent_count--;
+                                }
+
+                                // Add indent
+                                for (int64_t counter = 0; counter < indent_count; counter++) {
+                                    result_builder.append(indent.value());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Track start of structure to avoid adding leading comma
+            if (token.json_type != json_token_type::none && token.json_type != json_token_type::comment) {
+                is_start_of_structure = false;
             }
             if (token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array) {
                 is_start_of_structure = true;
-            }
-            else if (token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) {
-                is_start_of_structure = false;
             }
 
             switch (token.json_type) {
@@ -31168,6 +31199,9 @@ public:
                 case json_token_type::property_name: {
                     result_builder.append(json(token.value).dump());
                     result_builder.push_back(':');
+                    if (indent) {
+                        result_builder.push_back(' ');
+                    }
                     break;
                 }
                 // Comment
