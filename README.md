@@ -62,4 +62,4 @@ print(value) # ["hello", "world"]
 
 ### Limited API
 
-Due to limitations and complexity of GDExtension and GDScript, only one static method (`Jsonh.parse_element`) is exposed.
+Due to limitations and complexity of GDExtension and GDScript, only two static methods (`Jsonh.parse_element`, `Jsonh.parse_json`) are exposed.
