@@ -30244,11 +30244,11 @@ template <typename _Rng, typename _Allocator = use_allocator_arg>
 struct elements_of {
     explicit constexpr elements_of(_Rng&& __rng) noexcept
     requires std::is_default_constructible_v<_Allocator>
-    : __range(static_cast<_Rng&&>(__rng))
+    : __internal_range(static_cast<_Rng&&>(__rng))
     {}
 
     constexpr elements_of(_Rng&& __rng, _Allocator&& __alloc) noexcept
-    : __range((_Rng&&)__rng), __alloc((_Allocator&&)__alloc) {}
+    : __internal_range((_Rng&&)__rng), __alloc((_Allocator&&)__alloc) {}
 
     constexpr elements_of(elements_of&&) noexcept = default;
 
@@ -30257,7 +30257,7 @@ struct elements_of {
     constexpr elements_of &operator=(elements_of &&) = delete;
 
     constexpr _Rng&& get() noexcept {
-        return static_cast<_Rng&&>(__range);
+        return static_cast<_Rng&&>(__internal_range);
     }
 
     constexpr _Allocator get_allocator() const noexcept {
@@ -30266,7 +30266,7 @@ struct elements_of {
 
 private:
     [[no_unique_address]] _Allocator __alloc; // \expos
-    _Rng && __range; // \expos
+    _Rng && __internal_range; // \expos
 };
 
 template <typename _Rng>
