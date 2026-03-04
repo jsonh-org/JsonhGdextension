@@ -7,6 +7,11 @@ func _ready() -> void:
 	print(value) # ["hello", "world"]
 	print(type_string(typeof(value))) # Array
 	
+	const jsonh2:String = "[hello, world]"
+	var value2:Variant = Jsonh.parse_json(jsonh2).value
+	print(value2) # ["hello","world"]
+	print(type_string(typeof(value2))) # Array
+	
 	# Benchmarks
 	await get_tree().create_timer(1.0).timeout
 	benchmark(1.0, true)
