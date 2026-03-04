@@ -8,7 +8,7 @@ func _ready() -> void:
 	print(type_string(typeof(value))) # Array
 	
 	const jsonh2:String = "[hello, world]"
-	var value2:Variant = Jsonh.parse_json(jsonh2).value
+	var value2:Variant = Jsonh.parse_json(jsonh2, false, "\t").value
 	print(value2) # ["hello","world"]
 	print(type_string(typeof(value2))) # Array
 	
