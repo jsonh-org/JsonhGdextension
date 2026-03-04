@@ -20,7 +20,7 @@ public:
 	~Jsonh();
 
 	Ref<JsonhResult> parse_element(const String &string, const Ref<JsonhOptions> &options = {}) const noexcept;
-	Ref<JsonhResult> parse_json(const String &string, bool include_comments = false, const Ref<JsonhOptions> &options = {}) const noexcept;
+	Ref<JsonhResult> parse_json(const String &string, bool include_comments = false, const Variant &indent = nullptr, const Ref<JsonhOptions> &options = {}) const noexcept;
 
 protected:
 	static void _bind_methods();

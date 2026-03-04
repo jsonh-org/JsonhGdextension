@@ -25,9 +25,12 @@
 			<return type="JsonhResult" />
 			<param index="0" name="string" type="String" />
 			<param index="1" name="include_comments" type="bool" />
-			<param index="2" name="options" type="JsonhOptions" />
+			<param index="2" name="indent" type="String" />
+			<param index="3" name="options" type="JsonhOptions" />
 			<description>
-				Parses a JSONH element as minified JSON.
+				Parses a JSONH element as JSON.
+				If [code]include_comments[/code] is true, comments are included ([code]/*[/code] and [code]*/[/code] are escaped as [code]/ *[/code] and [code]* /[/code]).
+				If [code]indent[/code] is not null, the output is pretty-printed with the given indentation.
 				Example:
 				[codeblock]
 				var jsonh:String = "[hello, world]"

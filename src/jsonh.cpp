@@ -11,7 +11,7 @@ Jsonh *Jsonh::singleton = nullptr;
 
 void Jsonh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("parse_element", "string", "options"), &Jsonh::parse_element, DEFVAL(JsonhOptions::create()));
-	ClassDB::bind_method(D_METHOD("parse_json", "string", "include_comments", "options"), &Jsonh::parse_json, DEFVAL(false), DEFVAL(JsonhOptions::create()));
+	ClassDB::bind_method(D_METHOD("parse_json", "string", "include_comments", "indent", "options"), &Jsonh::parse_json, DEFVAL(false), DEFVAL(nullptr), DEFVAL(JsonhOptions::create()));
 }
 
 Jsonh *Jsonh::get_singleton() {
@@ -168,10 +168,15 @@ Ref<JsonhResult> Jsonh::parse_element(const String &string, const Ref<JsonhOptio
 	return next_element;
 }
 
-Ref<JsonhResult> Jsonh::parse_json(const String &string, bool include_comments, const Ref<JsonhOptions> &options) const noexcept {
+Ref<JsonhResult> Jsonh::parse_json(const String &string, bool include_comments, const Variant &indent, const Ref<JsonhOptions> &options) const noexcept {
 	jsonh_reader reader(string.utf8().get_data(), options->reader_options);
 
-	nonstd::expected<std::string, std::string> result = reader.parse_json(include_comments);
+	std::optional<std::string> indent_optional = std::nullopt;
+	if (indent.get_type() != Variant::Type::NIL) {
+		indent_optional = std::string(((String)indent).utf8().get_data());
+	}
+
+	nonstd::expected<std::string, std::string> result = reader.parse_json(include_comments, indent_optional);
 	if (!result) {
 		return JsonhResult::from_error(result.error().data());
 	}
