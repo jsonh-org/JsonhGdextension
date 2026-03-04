@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 6.6
+// Version: 7.0
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -30016,6 +30016,812 @@ public:
 }
 /*** End of inlined file: utf8_reader.hpp ***/
 
+
+/*** Start of inlined file: generator.hpp ***/
+#ifndef __STD_GENERATOR_INCLUDED
+#define __STD_GENERATOR_INCLUDED
+///////////////////////////////////////////////////////////////////////////////
+// Reference implementation of std::generator proposal P2168.
+//
+// See https://wg21.link/P2168 for details.
+//
+///////////////////////////////////////////////////////////////////////////////
+// Copyright Lewis Baker, Corentin Jabot
+//
+// Use, modification and distribution is subject to the Boost Software License,
+// Version 1.0.
+// (See accompanying file LICENSE or http://www.boost.org/LICENSE_1_0.txt)
+///////////////////////////////////////////////////////////////////////////////
+
+#pragma once
+
+#if __has_include(<coroutine>)
+#include <coroutine>
+#else
+// Fallback for older experimental implementations of coroutines.
+#include <experimental/coroutine>
+namespace std {
+using std::experimental::coroutine_handle;
+using std::experimental::coroutine_traits;
+using std::experimental::noop_coroutine;
+using std::experimental::suspend_always;
+using std::experimental::suspend_never;
+} // namespace std
+#endif
+
+#include <exception>
+#include <iterator>
+#include <new>
+#include <type_traits>
+#include <utility>
+#include <concepts>
+#include <cassert>
+
+#if __has_include(<ranges>)
+#  include <ranges>
+#else
+
+// Placeholder implementation of the bits we need from <ranges> header
+// when we don't have the <ranges> header (e.g. Clang 12 and earlier).
+namespace std {
+
+// Don't create naming conflicts with recent libc++ which defines std::iter_reference_t
+// in <iterator> but doesn't yet provide a <ranges> header.
+template <typename _T>
+using __iter_reference_t = decltype(*std::declval<_T&>());
+
+template <typename _T>
+using iter_value_t =
+    typename std::iterator_traits<std::remove_cvref_t<_T>>::value_type;
+
+namespace ranges {
+
+namespace __begin {
+void begin();
+
+struct _fn {
+    template <typename _Range>
+    requires requires(_Range& __r) {
+        __r.begin();
+    }
+    auto operator()(_Range&& __r) const
+        noexcept(noexcept(__r.begin()))
+        -> decltype(__r.begin()) {
+        return __r.begin();
+    }
+
+    template <typename _Range>
+    requires
+        (!requires(_Range& __r) { __r.begin(); }) &&
+        requires(_Range& __r) { begin(__r); }
+    auto operator()(_Range&& __r) const
+        noexcept(noexcept(begin(__r)))
+        -> decltype(begin(__r)) {
+        return begin(__r);
+    }
+};
+
+} // namespace __begin
+
+inline namespace __begin_cpo {
+inline constexpr __begin::_fn begin = {};
+}
+
+namespace __end {
+void end();
+
+struct _fn {
+    template <typename _Range>
+    requires requires(_Range& __r) { __r.end(); }
+    auto operator()(_Range&& __r) const
+        noexcept(noexcept(__r.end()))
+        -> decltype(__r.end()) {
+        return __r.end();
+    }
+
+    template <typename _Range>
+    requires
+        (!requires(_Range& __r) { __r.end(); }) &&
+        requires(_Range& __r) { end(__r); }
+    auto operator()(_Range&& __r) const
+        noexcept(noexcept(end(__r)))
+        -> decltype(end(__r)) {
+        return end(__r);
+    }
+};
+} // namespace __end
+
+inline namespace _end_cpo {
+inline constexpr __end::_fn end = {};
+}
+
+template <typename _Range>
+using iterator_t = decltype(begin(std::declval<_Range>()));
+
+template <typename _Range>
+using sentinel_t = decltype(end(std::declval<_Range>()));
+
+template <typename _Range>
+using range_reference_t = __iter_reference_t<iterator_t<_Range>>;
+
+template <typename _Range>
+using range_value_t = iter_value_t<iterator_t<_Range>>;
+
+template <typename _T>
+concept range = requires(_T& __t) {
+    ranges::begin(__t);
+    ranges::end(__t);
+};
+
+} // namespace ranges
+} // namespace std
+
+#endif // !__has_include(<ranges>)
+
+namespace std {
+
+template <typename _T>
+class __manual_lifetime {
+  public:
+    __manual_lifetime() noexcept {}
+    ~__manual_lifetime() {}
+
+    template <typename... _Args>
+    _T& construct(_Args&&... __args) noexcept(std::is_nothrow_constructible_v<_T, _Args...>) {
+        return *::new (static_cast<void*>(std::addressof(__value_))) _T((_Args&&)__args...);
+    }
+
+    void destruct() noexcept(std::is_nothrow_destructible_v<_T>) {
+        __value_.~_T();
+    }
+
+    _T& get() & noexcept {
+        return __value_;
+    }
+    _T&& get() && noexcept {
+        return static_cast<_T&&>(__value_);
+    }
+    const _T& get() const & noexcept {
+        return __value_;
+    }
+    const _T&& get() const && noexcept {
+        return static_cast<const _T&&>(__value_);
+    }
+
+  private:
+    union {
+        std::remove_const_t<_T> __value_;
+    };
+};
+
+template <typename _T>
+class __manual_lifetime<_T&> {
+  public:
+    __manual_lifetime() noexcept : __value_(nullptr) {}
+    ~__manual_lifetime() {}
+
+    _T& construct(_T& __value) noexcept {
+        __value_ = std::addressof(__value);
+        return __value;
+    }
+
+    void destruct() noexcept {}
+
+    _T& get() const noexcept {
+        return *__value_;
+    }
+
+  private:
+    _T* __value_;
+};
+
+template <typename _T>
+class __manual_lifetime<_T&&> {
+  public:
+    __manual_lifetime() noexcept : __value_(nullptr) {}
+    ~__manual_lifetime() {}
+
+    _T&& construct(_T&& __value) noexcept {
+        __value_ = std::addressof(__value);
+        return static_cast<_T&&>(__value);
+    }
+
+    void destruct() noexcept {}
+
+    _T&& get() const noexcept {
+        return static_cast<_T&&>(*__value_);
+    }
+
+  private:
+    _T* __value_;
+};
+
+struct use_allocator_arg {};
+
+namespace ranges {
+
+template <typename _Rng, typename _Allocator = use_allocator_arg>
+struct elements_of {
+    explicit constexpr elements_of(_Rng&& __rng) noexcept
+    requires std::is_default_constructible_v<_Allocator>
+    : __range(static_cast<_Rng&&>(__rng))
+    {}
+
+    constexpr elements_of(_Rng&& __rng, _Allocator&& __alloc) noexcept
+    : __range((_Rng&&)__rng), __alloc((_Allocator&&)__alloc) {}
+
+    constexpr elements_of(elements_of&&) noexcept = default;
+
+    constexpr elements_of(const elements_of &) = delete;
+    constexpr elements_of &operator=(const elements_of &) = delete;
+    constexpr elements_of &operator=(elements_of &&) = delete;
+
+    constexpr _Rng&& get() noexcept {
+        return static_cast<_Rng&&>(__range);
+    }
+
+    constexpr _Allocator get_allocator() const noexcept {
+        return __alloc;
+    }
+
+private:
+    [[no_unique_address]] _Allocator __alloc; // \expos
+    _Rng && __range; // \expos
+};
+
+template <typename _Rng>
+elements_of(_Rng &&) -> elements_of<_Rng>;
+
+template <typename _Rng, typename Allocator>
+elements_of(_Rng &&, Allocator&&) -> elements_of<_Rng, Allocator>;
+
+} // namespace ranges
+
+template <typename _Alloc>
+static constexpr bool __allocator_needs_to_be_stored =
+    !std::allocator_traits<_Alloc>::is_always_equal::value ||
+    !std::is_default_constructible_v<_Alloc>;
+
+// Round s up to next multiple of a.
+constexpr size_t __aligned_allocation_size(size_t s, size_t a) {
+    return (s + a - 1) & ~(a - 1);
+}
+
+template <typename _Ref,
+          typename _Value = std::remove_cvref_t<_Ref>,
+          typename _Allocator = use_allocator_arg>
+class generator;
+
+template<typename _Alloc>
+class __promise_base_alloc {
+    static constexpr std::size_t __offset_of_allocator(std::size_t __frameSize) noexcept {
+        return __aligned_allocation_size(__frameSize, alignof(_Alloc));
+    }
+
+    static constexpr std::size_t __padded_frame_size(std::size_t __frameSize) noexcept {
+        return __offset_of_allocator(__frameSize) + sizeof(_Alloc);
+    }
+
+    static _Alloc& __get_allocator(void* __frame, std::size_t __frameSize) noexcept {
+        return *reinterpret_cast<_Alloc*>(
+            static_cast<char*>(__frame) + __offset_of_allocator(__frameSize));
+    }
+
+public:
+    template<typename... _Args>
+    static void* operator new(std::size_t __frameSize, std::allocator_arg_t, _Alloc __alloc, _Args&...) {
+        void* __frame = __alloc.allocate(__padded_frame_size(__frameSize));
+
+        // Store allocator at end of the coroutine frame.
+        // Assuming the allocator's move constructor is non-throwing (a requirement for allocators)
+        ::new (static_cast<void*>(std::addressof(__get_allocator(__frame, __frameSize)))) _Alloc(std::move(__alloc));
+
+        return __frame;
+    }
+
+    template<typename _This, typename... _Args>
+    static void* operator new(std::size_t __frameSize, _This&, std::allocator_arg_t, _Alloc __alloc, _Args&...) {
+        return __promise_base_alloc::operator new(__frameSize, std::allocator_arg, std::move(__alloc));
+    }
+
+    static void operator delete(void* __ptr, std::size_t __frameSize) noexcept {
+        _Alloc& __alloc = __get_allocator(__ptr, __frameSize);
+        _Alloc __localAlloc(std::move(__alloc));
+        __alloc.~Alloc();
+        __localAlloc.deallocate(static_cast<std::byte*>(__ptr), __padded_frame_size(__frameSize));
+    }
+};
+
+template<typename _Alloc>
+    requires (!__allocator_needs_to_be_stored<_Alloc>)
+class __promise_base_alloc<_Alloc> {
+public:
+    static void* operator new(std::size_t __size) {
+        _Alloc __alloc;
+        return __alloc.allocate(__size);
+    }
+
+    static void operator delete(void* __ptr, std::size_t __size) noexcept {
+        _Alloc __alloc;
+        __alloc.deallocate(static_cast<std::byte*>(__ptr), __size);
+    }
+};
+
+template<typename _Ref>
+struct __generator_promise_base
+{
+    template <typename _Ref2, typename _Value, typename _Alloc>
+    friend class generator;
+
+    __generator_promise_base* __root_;
+    std::coroutine_handle<> __parentOrLeaf_;
+    // Note: Using manual_lifetime here to avoid extra calls to exception_ptr
+    // constructor/destructor in cases where it is not needed (i.e. where this
+    // generator coroutine is not used as a nested coroutine).
+    // This member is lazily constructed by the __yield_sequence_awaiter::await_suspend()
+    // method if this generator is used as a nested generator.
+    __manual_lifetime<std::exception_ptr> __exception_;
+    __manual_lifetime<_Ref> __value_;
+
+    explicit __generator_promise_base(std::coroutine_handle<> thisCoro) noexcept
+        : __root_(this)
+        , __parentOrLeaf_(thisCoro)
+    {}
+
+    ~__generator_promise_base() {
+        if (__root_ != this) {
+            // This coroutine was used as a nested generator and so will
+            // have constructed its __exception_ member which needs to be
+            // destroyed here.
+            __exception_.destruct();
+        }
+    }
+
+    std::suspend_always initial_suspend() noexcept {
+        return {};
+    }
+
+    void return_void() noexcept {}
+
+    void unhandled_exception() {
+        if (__root_ != this) {
+            __exception_.get() = std::current_exception();
+        } else {
+            throw;
+        }
+    }
+
+    // Transfers control back to the parent of a nested coroutine
+    struct __final_awaiter {
+        bool await_ready() noexcept {
+            return false;
+        }
+
+        template <typename _Promise>
+        std::coroutine_handle<>
+        await_suspend(std::coroutine_handle<_Promise> __h) noexcept {
+            _Promise& __promise = __h.promise();
+            __generator_promise_base& __root = *__promise.__root_;
+            if (&__root != &__promise) {
+                auto __parent = __promise.__parentOrLeaf_;
+                __root.__parentOrLeaf_ = __parent;
+                return __parent;
+            }
+            return std::noop_coroutine();
+        }
+
+        void await_resume() noexcept {}
+    };
+
+    __final_awaiter final_suspend() noexcept {
+        return {};
+    }
+
+    std::suspend_always yield_value(_Ref&& __x)
+            noexcept(std::is_nothrow_move_constructible_v<_Ref>) {
+        __root_->__value_.construct((_Ref&&)__x);
+        return {};
+    }
+
+    template <typename _T>
+    requires
+        (!std::is_reference_v<_Ref>) &&
+        std::is_convertible_v<_T, _Ref>
+    std::suspend_always yield_value(_T&& __x)
+            noexcept(std::is_nothrow_constructible_v<_Ref, _T>) {
+        __root_->__value_.construct((_T&&)__x);
+        return {};
+    }
+
+    template <typename _Gen>
+    struct __yield_sequence_awaiter {
+        _Gen __gen_;
+
+        __yield_sequence_awaiter(_Gen&& __g) noexcept
+            // Taking ownership of the generator ensures frame are destroyed
+            // in the reverse order of their execution.
+            : __gen_((_Gen&&)__g) {
+        }
+
+        bool await_ready() noexcept {
+            return false;
+        }
+
+        // set the parent, root and exceptions pointer and
+        // resume the nested
+        template<typename _Promise>
+        std::coroutine_handle<>
+        await_suspend(std::coroutine_handle<_Promise> __h) noexcept {
+            __generator_promise_base& __current = __h.promise();
+            __generator_promise_base& __nested = *__gen_.__get_promise();
+            __generator_promise_base& __root = *__current.__root_;
+
+            __nested.__root_ = __current.__root_;
+            __nested.__parentOrLeaf_ = __h;
+
+            // Lazily construct the __exception_ member here now that we
+            // know it will be used as a nested generator. This will be
+            // destroyed by the promise destructor.
+            __nested.__exception_.construct();
+            __root.__parentOrLeaf_ = __gen_.__get_coro();
+
+            // Immediately resume the nested coroutine (nested generator)
+            return __gen_.__get_coro();
+        }
+
+        void await_resume() {
+            __generator_promise_base& __nestedPromise = *__gen_.__get_promise();
+            if (__nestedPromise.__exception_.get()) {
+                std::rethrow_exception(std::move(__nestedPromise.__exception_.get()));
+            }
+        }
+    };
+
+    template <typename _OValue, typename _OAlloc>
+    __yield_sequence_awaiter<generator<_Ref, _OValue, _OAlloc>>
+    yield_value(std::ranges::elements_of<generator<_Ref, _OValue, _OAlloc>> __g) noexcept {
+        return std::move(__g).get();
+    }
+
+    template <std::ranges::range _Rng, typename _Allocator>
+    __yield_sequence_awaiter<generator<_Ref, std::remove_cvref_t<_Ref>, _Allocator>>
+    yield_value(std::ranges::elements_of<_Rng, _Allocator> && __x) {
+        return [](allocator_arg_t, _Allocator alloc, auto && __rng) -> generator<_Ref, std::remove_cvref_t<_Ref>, _Allocator> {
+            for(auto && e: __rng)
+                co_yield static_cast<decltype(e)>(e);
+        }(std::allocator_arg, __x.get_allocator(), std::forward<_Rng>(__x.get()));
+    }
+
+    void resume() {
+        __parentOrLeaf_.resume();
+    }
+
+    // Disable use of co_await within this coroutine.
+    void await_transform() = delete;
+};
+
+template<typename _Generator, typename _ByteAllocator, bool _ExplicitAllocator = false>
+struct __generator_promise;
+
+template<typename _Ref, typename _Value, typename _Alloc, typename _ByteAllocator, bool _ExplicitAllocator>
+struct __generator_promise<generator<_Ref, _Value, _Alloc>, _ByteAllocator, _ExplicitAllocator> final
+    : public __generator_promise_base<_Ref>
+    , public __promise_base_alloc<_ByteAllocator> {
+    __generator_promise() noexcept
+    : __generator_promise_base<_Ref>(std::coroutine_handle<__generator_promise>::from_promise(*this))
+    {}
+
+    generator<_Ref, _Value, _Alloc> get_return_object() noexcept {
+        return generator<_Ref, _Value, _Alloc>{
+            std::coroutine_handle<__generator_promise>::from_promise(*this)
+        };
+    }
+
+    using __generator_promise_base<_Ref>::yield_value;
+
+    template <std::ranges::range _Rng>
+    typename __generator_promise_base<_Ref>::template __yield_sequence_awaiter<generator<_Ref, _Value, _Alloc>>
+    yield_value(std::ranges::elements_of<_Rng> && __x) {
+        static_assert (!_ExplicitAllocator,
+        "This coroutine has an explicit allocator specified with std::allocator_arg so an allocator needs to be passed "
+        "explicitely to std::elements_of");
+        return [](auto && __rng) -> generator<_Ref, _Value, _Alloc> {
+            for(auto && e: __rng)
+                co_yield static_cast<decltype(e)>(e);
+        }(std::forward<_Rng>(__x.get()));
+    }
+};
+
+template<typename _Alloc>
+using __byte_allocator_t = typename std::allocator_traits<std::remove_cvref_t<_Alloc>>::template rebind_alloc<std::byte>;
+
+// Type-erased allocator with default allocator behaviour.
+template<typename _Ref, typename _Value, typename... _Args>
+struct coroutine_traits<generator<_Ref, _Value>, _Args...> {
+    using promise_type = __generator_promise<generator<_Ref, _Value>, std::allocator<std::byte>>;
+};
+
+// Type-erased allocator with std::allocator_arg parameter
+template<typename _Ref, typename _Value, typename _Alloc, typename... _Args>
+struct coroutine_traits<generator<_Ref, _Value>, allocator_arg_t, _Alloc, _Args...> {
+private:
+    using __byte_allocator = __byte_allocator_t<_Alloc>;
+public:
+    using promise_type = __generator_promise<generator<_Ref, _Value>, __byte_allocator, true /*explicit Allocator*/>;
+};
+
+// Type-erased allocator with std::allocator_arg parameter (non-static member functions)
+template<typename _Ref, typename _Value, typename _This, typename _Alloc, typename... _Args>
+struct coroutine_traits<generator<_Ref, _Value>, _This, allocator_arg_t, _Alloc, _Args...> {
+private:
+    using __byte_allocator = __byte_allocator_t<_Alloc>;
+public:
+    using promise_type = __generator_promise<generator<_Ref, _Value>, __byte_allocator,  true /*explicit Allocator*/>;
+};
+
+// Generator with specified allocator type
+template<typename _Ref, typename _Value, typename _Alloc, typename... _Args>
+struct coroutine_traits<generator<_Ref, _Value, _Alloc>, _Args...> {
+    using __byte_allocator = __byte_allocator_t<_Alloc>;
+public:
+    using promise_type = __generator_promise<generator<_Ref, _Value, _Alloc>, __byte_allocator>;
+};
+
+// TODO :  make layout compatible promise casts possible
+template <typename _Ref, typename _Value, typename _Alloc>
+class generator {
+    using __byte_allocator = __byte_allocator_t<_Alloc>;
+public:
+    using promise_type = __generator_promise<generator<_Ref, _Value, _Alloc>, __byte_allocator>;
+    friend promise_type;
+private:
+    using __coroutine_handle = std::coroutine_handle<promise_type>;
+public:
+
+    generator() noexcept = default;
+
+    generator(generator&& __other) noexcept
+        : __coro_(std::exchange(__other.__coro_, {}))
+        , __started_(std::exchange(__other.__started_, false)) {
+    }
+
+    ~generator() noexcept {
+        if (__coro_) {
+            if (__started_ && !__coro_.done()) {
+                __coro_.promise().__value_.destruct();
+            }
+            __coro_.destroy();
+        }
+    }
+
+    generator& operator=(generator && g) noexcept {
+        swap(g);
+        return *this;
+    }
+
+    void swap(generator& __other) noexcept {
+        std::swap(__coro_, __other.__coro_);
+        std::swap(__started_, __other.__started_);
+    }
+
+    struct sentinel {};
+
+    class iterator {
+      public:
+        using iterator_category = std::input_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = _Value;
+        using reference = _Ref;
+        using pointer = std::add_pointer_t<_Ref>;
+
+        iterator() noexcept = default;
+        iterator(const iterator &) = delete;
+
+        iterator(iterator&& __other) noexcept
+        : __coro_(std::exchange(__other.__coro_, {})) {
+        }
+
+        iterator& operator=(iterator&& __other) {
+            std::swap(__coro_, __other.__coro_);
+            return *this;
+        }
+
+        ~iterator() {
+        }
+
+        friend bool operator==(const iterator &it, sentinel) noexcept {
+            return it.__coro_.done();
+        }
+
+        iterator &operator++() {
+            __coro_.promise().__value_.destruct();
+            __coro_.promise().resume();
+            return *this;
+        }
+        void operator++(int) {
+            (void)operator++();
+        }
+
+        reference operator*() const noexcept {
+            return static_cast<reference>(__coro_.promise().__value_.get());
+        }
+
+      private:
+        friend generator;
+
+        explicit iterator(__coroutine_handle __coro) noexcept
+        : __coro_(__coro) {}
+
+        __coroutine_handle __coro_;
+    };
+
+    iterator begin() {
+        assert(__coro_);
+        assert(!__started_);
+        __started_ = true;
+        __coro_.resume();
+        return iterator{__coro_};
+    }
+
+    sentinel end() noexcept {
+        return {};
+    }
+
+private:
+    explicit generator(__coroutine_handle __coro) noexcept
+        : __coro_(__coro) {
+    }
+
+public: // to get around access restrictions for __yield_sequence_awaitable
+    std::coroutine_handle<> __get_coro() noexcept { return __coro_; }
+    promise_type* __get_promise() noexcept { return std::addressof(__coro_.promise()); }
+
+private:
+    __coroutine_handle __coro_;
+    bool __started_ = false;
+};
+
+// Specialisation for type-erased allocator implementation.
+template <typename _Ref, typename _Value>
+class generator<_Ref, _Value, use_allocator_arg> {
+    using __promise_base = __generator_promise_base<_Ref>;
+public:
+
+    generator() noexcept
+        : __promise_(nullptr)
+        , __coro_()
+        , __started_(false)
+    {}
+
+    generator(generator&& __other) noexcept
+        : __promise_(std::exchange(__other.__promise_, nullptr))
+        , __coro_(std::exchange(__other.__coro_, {}))
+        , __started_(std::exchange(__other.__started_, false)) {
+    }
+
+    ~generator() noexcept {
+        if (__coro_) {
+            if (__started_ && !__coro_.done()) {
+                __promise_->__value_.destruct();
+            }
+            __coro_.destroy();
+        }
+    }
+
+    generator& operator=(generator g) noexcept {
+        swap(g);
+        return *this;
+    }
+
+    void swap(generator& __other) noexcept {
+        std::swap(__promise_, __other.__promise_);
+        std::swap(__coro_, __other.__coro_);
+        std::swap(__started_, __other.__started_);
+    }
+
+    struct sentinel {};
+
+    class iterator {
+      public:
+        using iterator_category = std::input_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = _Value;
+        using reference = _Ref;
+        using pointer = std::add_pointer_t<_Ref>;
+
+        iterator() noexcept = default;
+        iterator(const iterator &) = delete;
+
+        iterator(iterator&& __other) noexcept
+        : __promise_(std::exchange(__other.__promise_, nullptr))
+        , __coro_(std::exchange(__other.__coro_, {}))
+        {}
+
+        iterator& operator=(iterator&& __other) {
+            __promise_ = std::exchange(__other.__promise_, nullptr);
+            __coro_ = std::exchange(__other.__coro_, {});
+            return *this;
+        }
+
+        ~iterator() = default;
+
+        friend bool operator==(const iterator &it, sentinel) noexcept {
+            return it.__coro_.done();
+        }
+
+        iterator& operator++() {
+            __promise_->__value_.destruct();
+            __promise_->resume();
+            return *this;
+        }
+
+        void operator++(int) {
+            (void)operator++();
+        }
+
+        reference operator*() const noexcept {
+            return static_cast<reference>(__promise_->__value_.get());
+        }
+
+      private:
+        friend generator;
+
+        explicit iterator(__promise_base* __promise, std::coroutine_handle<> __coro) noexcept
+        : __promise_(__promise)
+        , __coro_(__coro)
+        {}
+
+        __promise_base* __promise_;
+        std::coroutine_handle<> __coro_;
+    };
+
+    iterator begin() {
+        assert(__coro_);
+        assert(!__started_);
+        __started_ = true;
+        __coro_.resume();
+        return iterator{__promise_, __coro_};
+    }
+
+    sentinel end() noexcept {
+        return {};
+    }
+
+private:
+    template<typename _Generator, typename _ByteAllocator, bool _ExplicitAllocator>
+    friend struct __generator_promise;
+
+    template<typename _Promise>
+    explicit generator(std::coroutine_handle<_Promise> __coro) noexcept
+        : __promise_(std::addressof(__coro.promise()))
+        , __coro_(__coro)
+    {}
+
+public: // to get around access restrictions for __yield_sequence_awaitable
+    std::coroutine_handle<> __get_coro() noexcept { return __coro_; }
+    __promise_base* __get_promise() noexcept { return __promise_; }
+
+private:
+    __promise_base* __promise_;
+    std::coroutine_handle<> __coro_;
+    bool __started_ = false;
+};
+
+#if __has_include(<ranges>)
+namespace ranges {
+
+template <typename _T, typename _U, typename _Alloc>
+constexpr inline bool enable_view<generator<_T, _U, _Alloc>> = true;
+
+} // namespace ranges
+#endif
+
+} // namespace std
+
+#endif // __STD_GENERATOR_INCLUDED
+
+/*** End of inlined file: generator.hpp ***/
+
 using namespace nlohmann;
 
 namespace jsonh_cpp {
@@ -30248,6 +31054,147 @@ public:
         return next_element;
     }
     /**
+     * @brief Parses a single element as minified JSON from the reader.
+     *
+     * If @c include_comments is true, comments are included (@c / @c * and @c * @c / are escaped).
+     *
+     * The result is not safe to embed in HTML.
+     */
+    nonstd::expected<std::string, std::string> parse_json(bool include_comments = false) noexcept {
+        int64_t current_depth = 0;
+        bool is_start_of_structure = true;
+        bool is_property_value = false;
+
+        std::string result_builder;
+
+        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+            // Check error
+            if (!token_result) {
+                return nonstd::unexpected<std::string>(token_result.error());
+            }
+            jsonh_token token = token_result.value();
+
+            if (token.json_type == json_token_type::null || token.json_type == json_token_type::true_bool || token.json_type == json_token_type::false_bool || token.json_type == json_token_type::string || token.json_type == json_token_type::number || token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array || token.json_type == json_token_type::property_name) {
+                if (!is_property_value) {
+                    if (!is_start_of_structure) {
+                        result_builder.push_back(',');
+                    }
+                    is_start_of_structure = false;
+                }
+            }
+            if (token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array) {
+                is_start_of_structure = true;
+            }
+            else if (token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) {
+                is_start_of_structure = false;
+            }
+
+            switch (token.json_type) {
+                // Null
+                case json_token_type::null: {
+                    result_builder.append("null");
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // True
+                case json_token_type::true_bool: {
+                    result_builder.append("true");
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // False
+                case json_token_type::false_bool: {
+                    result_builder.append("false");
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // String
+                case json_token_type::string: {
+                    result_builder.append(json(token.value).dump());
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // Number
+                case json_token_type::number: {
+                    nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                    if (!result) {
+                        return nonstd::unexpected<std::string>(result.error());
+                    }
+                    result_builder.append(json(result.value()).dump());
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // Start Object
+                case json_token_type::start_object: {
+                    result_builder.push_back('{');
+                    current_depth++;
+                    break;
+                }
+                // Start Array
+                case json_token_type::start_array: {
+                    result_builder.push_back('[');
+                    current_depth++;
+                    break;
+                }
+                // End Object
+                case json_token_type::end_object: {
+                    result_builder.push_back('}');
+                    current_depth--;
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // End Array
+                case json_token_type::end_array: {
+                    result_builder.push_back(']');
+                    current_depth--;
+                    if (current_depth == 0) {
+                        return result_builder;
+                    }
+                    break;
+                }
+                // Property Name
+                case json_token_type::property_name: {
+                    result_builder.append(json(token.value).dump());
+                    result_builder.push_back(':');
+                    break;
+                }
+                // Comment
+                case json_token_type::comment: {
+                    if (include_comments) {
+                        result_builder.append("/*");
+                        std::string comment_value = token.value;
+                        replace_all(comment_value, "/*", "/ *");
+                        replace_all(comment_value, "*/", "* /");
+                        result_builder.append(comment_value);
+                        result_builder.append("*/");
+                    }
+                    break;
+                }
+                // Not implemented
+                default: {
+                    return nonstd::unexpected<std::string>("Token type not implemented");
+                }
+            }
+
+            is_property_value = token.json_type == json_token_type::property_name;
+        }
+
+        // End of input
+        return nonstd::unexpected<std::string>("Expected token, got end of input");
+    }
+    /**
     * @brief Tries to find the given property name in the reader.
     *
     * For example, to find @c c:
@@ -30265,7 +31212,7 @@ public:
     * @endcode
     **/
     bool find_property_value(const std::string& property_name) noexcept {
-        long long current_depth = 0;
+        int64_t current_depth = 0;
 
         for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
             // Check error
@@ -30292,10 +31239,6 @@ public:
                     }
                     break;
                 }
-                // Other
-                default: {
-                    break;
-                }
             }
         }
 
@@ -30315,87 +31258,79 @@ public:
     /**
     * @brief Reads comments and whitespace and errors if the reader contains another element.
     **/
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_end_of_elements() noexcept {
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Peek char
         if (!!peek()) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected end of elements"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected end of elements"));
+            co_return;
         }
-
-        return tokens;
     }
     /**
     * @brief Reads a single element from the reader.
     **/
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_element() noexcept {
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Peek rune
         std::optional<std::string> next = peek();
         if (!next) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected token, got end of input"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected token, got end of input"));
+            co_return;
         }
 
         // Object
         if (next.value() == "{") {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_object()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
         // Array
         else if (next.value() == "[") {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_array()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
         // Primitive value (null, true, false, string, number)
         else {
             nonstd::expected<jsonh_token, std::string> token = read_primitive_element();
             if (!token) {
-                tokens.push_back(nonstd::unexpected<std::string>(token.error()));
-                return tokens;
+                co_yield(nonstd::unexpected<std::string>(token.error()));
+                co_return;
             }
 
             // Detect braceless object from property name
             for (const nonstd::expected<jsonh_token, std::string>& token2 : read_braceless_object_or_end_of_primitive(token.value())) {
                 if (!token2) {
-                    tokens.push_back(token2);
-                    return tokens;
+                    co_yield(token2);
+                    co_return;
                 }
-                tokens.push_back(token2);
+                co_yield(token2);
             }
         }
-
-        return tokens;
     }
 
 private:
@@ -30424,39 +31359,37 @@ private:
         "\u2029", "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085",
     };
 
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_object() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_object() noexcept {
         // Opening brace
         if (!read_one("{")) {
             // Braceless object
             for (const nonstd::expected<jsonh_token, std::string>& token : read_braceless_object()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
-            return tokens;
+            co_return;
         }
         // Start of object
-        tokens.push_back(jsonh_token(json_token_type::start_object));
+        co_yield(jsonh_token(json_token_type::start_object));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_return;
         }
 
         while (true) {
             // Comments & whitespace
             for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
 
             std::optional<std::string> next = peek();
@@ -30464,12 +31397,12 @@ private:
                 // End of incomplete object
                 if (options.incomplete_inputs) {
                     depth--;
-                    tokens.push_back(jsonh_token(json_token_type::end_object));
-                    return tokens;
+                    co_yield(jsonh_token(json_token_type::end_object));
+                    co_return;
                 }
                 // Missing closing brace
-                tokens.push_back(nonstd::unexpected<std::string>("Expected `}` to end object, got end of input"));
-                return tokens;
+                co_yield(nonstd::unexpected<std::string>("Expected `}` to end object, got end of input"));
+                co_return;
             }
 
             // Closing brace
@@ -30477,42 +31410,40 @@ private:
                 // End of object
                 read();
                 depth--;
-                tokens.push_back(jsonh_token(json_token_type::end_object));
-                return tokens;
+                co_yield(jsonh_token(json_token_type::end_object));
+                co_return;
             }
             // Property
             else {
                 for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
                     if (!token) {
-                        tokens.push_back(token);
-                        return tokens;
+                        co_yield(token);
+                        co_return;
                     }
-                    tokens.push_back(token);
+                    co_yield(token);
                 }
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_braceless_object(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
         // Start of object
-        tokens.push_back(jsonh_token(json_token_type::start_object));
+        co_yield(jsonh_token(json_token_type::start_object));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_return;
         }
 
         // Initial tokens
         if (property_name_tokens) {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_property(property_name_tokens)) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
 
@@ -30520,38 +31451,36 @@ private:
             // Comments & whitespace
             for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
 
             if (!peek()) {
                 // End of braceless object
                 depth--;
-                tokens.push_back(jsonh_token(json_token_type::end_object));
-                return tokens;
+                co_yield(jsonh_token(json_token_type::end_object));
+                co_return;
             }
 
             // Property
             for (const nonstd::expected<jsonh_token, std::string>& token : read_property()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_braceless_object_or_end_of_primitive(const jsonh_token& primitive_token) {
         // Comments & whitespace
         std::optional<std::vector<jsonh_token>> property_name_tokens = {};
         for (const nonstd::expected<jsonh_token, std::string>& comment_or_whitespace_token : read_comments_and_whitespace()) {
             if (!comment_or_whitespace_token) {
-                tokens.push_back(comment_or_whitespace_token);
-                return tokens;
+                co_yield(comment_or_whitespace_token);
+                co_return;
             }
             if (!property_name_tokens) {
                 property_name_tokens = std::vector<jsonh_token>();
@@ -30562,15 +31491,15 @@ private:
         // Primitive
         if (!read_one(":")) {
             // Primitive
-            tokens.push_back(primitive_token);
+            co_yield(primitive_token);
             // Comments & whitespace
             if (property_name_tokens) {
                 for (const jsonh_token& comment_or_whitespace_token : property_name_tokens.value()) {
-                    tokens.push_back(comment_or_whitespace_token);
+                    co_yield(comment_or_whitespace_token);
                 }
             }
             // End of primitive
-            return tokens;
+            co_return;
         }
 
         // Property name
@@ -30582,122 +31511,110 @@ private:
         // Braceless object
         for (const nonstd::expected<jsonh_token, std::string>& object_token : read_braceless_object(property_name_tokens)) {
             if (!object_token) {
-                tokens.push_back(object_token);
-                return tokens;
+                co_yield(object_token);
+                co_return;
             }
-            tokens.push_back(object_token);
+            co_yield(object_token);
         }
-
-        return tokens;
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_property(std::optional<std::vector<jsonh_token>> property_name_tokens = std::nullopt) noexcept {
         // Property name
         if (property_name_tokens) {
             for (const jsonh_token& token : property_name_tokens.value()) {
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
         else {
             for (const nonstd::expected<jsonh_token, std::string>& token : read_property_name()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
         }
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Property value
         for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Optional comma
         read_one(",");
-
-        return tokens;
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_property_name() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_property_name() noexcept {
         // String
         nonstd::expected<jsonh_token, std::string> string_result = read_string();
         if (!string_result) {
-            tokens.push_back(string_result);
-            return tokens;
+            co_yield(string_result);
+            co_return;
         }
         jsonh_token string = string_result.value();
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Colon
         if (!read_one(":")) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected `:` after property name in object"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected `:` after property name in object"));
+            co_return;
         }
 
         // End of property name
-        tokens.push_back(jsonh_token(json_token_type::property_name, string.value));
-
-        return tokens;
+        co_yield(jsonh_token(json_token_type::property_name, string.value));
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_array() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_array() noexcept {
         // Opening bracket
         if (!read_one("[")) {
-            tokens.push_back(nonstd::unexpected<std::string>("Expected `[` to start array"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Expected `[` to start array"));
+            co_return;
         }
         // Start of array
-        tokens.push_back(jsonh_token(json_token_type::start_array));
+        co_yield(jsonh_token(json_token_type::start_array));
         depth++;
 
         // Check exceeded max depth
         if (depth > options.max_depth) {
-            tokens.push_back(nonstd::unexpected<std::string>("Exceeded max depth"));
-            return tokens;
+            co_yield(nonstd::unexpected<std::string>("Exceeded max depth"));
+            co_return;
         }
 
         while (true) {
             // Comments & whitespace
             for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
                 if (!token) {
-                    tokens.push_back(token);
-                    return tokens;
+                    co_yield(token);
+                    co_return;
                 }
-                tokens.push_back(token);
+                co_yield(token);
             }
 
             std::optional<std::string> next = peek();
@@ -30705,12 +31622,12 @@ private:
                 // End of incomplete array
                 if (options.incomplete_inputs) {
                     depth--;
-                    tokens.push_back(jsonh_token(json_token_type::end_array));
-                    return tokens;
+                    co_yield(jsonh_token(json_token_type::end_array));
+                    co_return;
                 }
                 // Missing closing bracket
-                tokens.push_back(nonstd::unexpected<std::string>("Expected `]` to end array, got end of input"));
-                return tokens;
+                co_yield(nonstd::unexpected<std::string>("Expected `]` to end array, got end of input"));
+                co_return;
             }
 
             // Closing bracket
@@ -30718,46 +31635,42 @@ private:
                 // End of array
                 read();
                 depth--;
-                tokens.push_back(jsonh_token(json_token_type::end_array));
-                return tokens;
+                co_yield(jsonh_token(json_token_type::end_array));
+                co_return;
             }
             // Item
             else {
                 for (const nonstd::expected<jsonh_token, std::string>& token : read_item()) {
                     if (!token) {
-                        tokens.push_back(token);
-                        return tokens;
+                        co_yield(token);
+                        co_return;
                     }
-                    tokens.push_back(token);
+                    co_yield(token);
                 }
             }
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_item() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_item() noexcept {
         // Element
         for (const nonstd::expected<jsonh_token, std::string>& token : read_element()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Comments & whitespace
         for (const nonstd::expected<jsonh_token, std::string>& token : read_comments_and_whitespace()) {
             if (!token) {
-                tokens.push_back(token);
-                return tokens;
+                co_yield(token);
+                co_return;
             }
-            tokens.push_back(token);
+            co_yield(token);
         }
 
         // Optional comma
         read_one(",");
-
-        return tokens;
     }
     nonstd::expected<jsonh_token, std::string> read_string() noexcept {
         // Verbatim
@@ -31290,9 +32203,7 @@ private:
             return read_quoteless_string();
         }
     }
-    std::vector<nonstd::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
-        std::vector<nonstd::expected<jsonh_token, std::string>> tokens = {};
-
+    std::generator<nonstd::expected<jsonh_token, std::string>> read_comments_and_whitespace() noexcept {
         while (true) {
             // Whitespace
             read_whitespace();
@@ -31307,18 +32218,16 @@ private:
             if (next.value() == "#" || next.value() == "/") {
                 nonstd::expected<jsonh_token, std::string> comment = read_comment();
                 if (!comment) {
-                    tokens.push_back(comment);
-                    return tokens;
+                    co_yield(comment);
+                    co_return;
                 }
-                tokens.push_back(comment);
+                co_yield(comment);
             }
             // End of comments
             else {
                 break;
             }
         }
-
-        return tokens;
     }
     nonstd::expected<jsonh_token, std::string> read_comment() noexcept {
         bool block_comment = false;
@@ -31615,6 +32524,16 @@ private:
             }
         }
         return result;
+    }
+    static void replace_all(std::string& s, const std::string& search, const std::string& replace) {
+        for (size_t pos = 0; ; pos += replace.length()) {
+            // Locate the substring to replace
+            pos = s.find(search, pos);
+            if (pos == std::string::npos) break;
+            // Replace by erasing and inserting
+            s.erase(pos, search.length());
+            s.insert(pos, replace);
+        }
     }
 };
 
