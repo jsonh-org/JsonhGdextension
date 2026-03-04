@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 7.1
+// Version: 7.2
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -30387,7 +30387,7 @@ struct __generator_promise_base
         if (__root_ != this) {
             __exception_.get() = std::current_exception();
         } else {
-            throw;
+            std::abort();
         }
     }
 
@@ -31237,6 +31237,10 @@ public:
                         // Path found
                         return true;
                     }
+                    break;
+                }
+                // Other
+                default: {
                     break;
                 }
             }
