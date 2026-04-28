@@ -29,7 +29,7 @@ jobs:
             { platform: android, arch: arm32, os: ubuntu-22.04 },
             { platform: ios, arch: arm64, os: macos-latest },
             { platform: web, arch: wasm32, os: ubuntu-22.04 },
-            #{ platform: web, arch: wasm64, os: ubuntu-22.04 }, # Doesn't exist yet
+            { platform: web, arch: wasm64, os: ubuntu-22.04 },
           ]
         target-type: [template_debug, template_release]
         float-precision: [single, double]
