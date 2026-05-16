@@ -1,5 +1,5 @@
 // JsonhCpp (JSON for Humans)
-// Version: 8.0
+// Version: 8.1
 // Link: https://github.com/jsonh-org/JsonhCpp
 // License: MIT
 
@@ -31060,173 +31060,196 @@ public:
      *
      * If @c indent is not null, the output is pretty-printed with the given indentation.
      *
-     * The result is not safe to embed in HTML.
+     * Note: The result is @b NOT safe to embed in HTML. To safely embed in HTML, you need to escape characters like @c <, @c > and @c &.
      */
     nonstd::expected<std::string, std::string> parse_json(bool include_comments = false, std::optional<std::string> indent = std::nullopt) noexcept {
-        int64_t current_depth = 0;
-        bool is_start_of_structure = true;
-        bool is_property_value = false;
+        auto parse_next_element_as_json = [&]() -> nonstd::expected<std::string, std::string> {
+            int64_t current_depth = 0;
+            bool is_start_of_structure = true;
+            bool is_property_value = false;
 
-        std::string result_builder;
+            std::string result_builder;
 
-        for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
-            // Check error
-            if (!token_result) {
-                return nonstd::unexpected<std::string>(token_result.error());
-            }
-            jsonh_token token = token_result.value();
-
-            // Add comments and indents
-            if (!is_property_value) {
-                // Add comma before property/item
-                if ((token.json_type != json_token_type::none && token.json_type != json_token_type::comment) && current_depth > 0 && !is_start_of_structure) {
-                    // Don't add trailing comma
-                    if (token.json_type != json_token_type::end_object && token.json_type != json_token_type::end_array) {
-                        result_builder.push_back(',');
-                    }
+            for (const nonstd::expected<jsonh_token, std::string>& token_result : read_element()) {
+                // Check error
+                if (!token_result) {
+                    return nonstd::unexpected<std::string>(token_result.error());
                 }
+                jsonh_token token = token_result.value();
 
-                // Apply indentation
-                if (indent) {
-                    // Don't indent inside empty structures
-                    if (!((token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) && is_start_of_structure)) {
-                        // Don't indent comment if not included
-                        if (!(token.json_type == json_token_type::comment && !include_comments)) {
-                            // Don't indent root elements
-                            if (current_depth > 0) {
-                                // Add newline before element
-                                result_builder.push_back('\n');
+                // Add comments and indents
+                if (!is_property_value) {
+                    // Add comma before property/item
+                    if ((token.json_type != json_token_type::none && token.json_type != json_token_type::comment) && current_depth > 0 && !is_start_of_structure) {
+                        // Don't add trailing comma
+                        if (token.json_type != json_token_type::end_object && token.json_type != json_token_type::end_array) {
+                            result_builder.push_back(',');
+                        }
+                    }
 
-                                // Get current indent count
-                                int64_t indent_count = current_depth;
-                                if (token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) {
-                                    indent_count--;
-                                }
+                    // Apply indentation
+                    if (indent) {
+                        // Don't indent inside empty structures
+                        if (!((token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) && is_start_of_structure)) {
+                            // Don't indent comment if not included
+                            if (!(token.json_type == json_token_type::comment && !include_comments)) {
+                                // Don't indent root elements
+                                if (current_depth > 0) {
+                                    // Add newline before element
+                                    result_builder.push_back('\n');
 
-                                // Add indent
-                                for (int64_t counter = 0; counter < indent_count; counter++) {
-                                    result_builder.append(indent.value());
+                                    // Get current indent count
+                                    int64_t indent_count = current_depth;
+                                    if (token.json_type == json_token_type::end_object || token.json_type == json_token_type::end_array) {
+                                        indent_count--;
+                                    }
+
+                                    // Add indent
+                                    for (int64_t counter = 0; counter < indent_count; counter++) {
+                                        result_builder.append(indent.value());
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            // Track start of structure to avoid adding leading comma
-            if (token.json_type != json_token_type::none && token.json_type != json_token_type::comment) {
-                is_start_of_structure = false;
-            }
-            if (token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array) {
-                is_start_of_structure = true;
+                // Track start of structure to avoid adding leading comma
+                if (token.json_type != json_token_type::none && token.json_type != json_token_type::comment) {
+                    is_start_of_structure = false;
+                }
+                if (token.json_type == json_token_type::start_object || token.json_type == json_token_type::start_array) {
+                    is_start_of_structure = true;
+                }
+
+                switch (token.json_type) {
+                    // Null
+                    case json_token_type::null: {
+                        result_builder.append("null");
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // True
+                    case json_token_type::true_bool: {
+                        result_builder.append("true");
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // False
+                    case json_token_type::false_bool: {
+                        result_builder.append("false");
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // String
+                    case json_token_type::string: {
+                        result_builder.append(json(token.value).dump());
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // Number
+                    case json_token_type::number: {
+                        nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
+                        if (!result) {
+                            return nonstd::unexpected<std::string>(result.error());
+                        }
+                        result_builder.append(json(result.value()).dump());
+                        if (result_builder.ends_with(".0")) {
+                            result_builder.erase(result_builder.size() - 2);
+                        }
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // Start Object
+                    case json_token_type::start_object: {
+                        result_builder.push_back('{');
+                        current_depth++;
+                        break;
+                    }
+                    // Start Array
+                    case json_token_type::start_array: {
+                        result_builder.push_back('[');
+                        current_depth++;
+                        break;
+                    }
+                    // End Object
+                    case json_token_type::end_object: {
+                        result_builder.push_back('}');
+                        current_depth--;
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // End Array
+                    case json_token_type::end_array: {
+                        result_builder.push_back(']');
+                        current_depth--;
+                        if (current_depth == 0) {
+                            return result_builder;
+                        }
+                        break;
+                    }
+                    // Property Name
+                    case json_token_type::property_name: {
+                        result_builder.append(json(token.value).dump());
+                        result_builder.push_back(':');
+                        if (indent) {
+                            result_builder.push_back(' ');
+                        }
+                        break;
+                    }
+                    // Comment
+                    case json_token_type::comment: {
+                        if (include_comments) {
+                            result_builder.append("/*");
+                            std::string comment_value = token.value;
+                            replace_all(comment_value, "/*", "/ *");
+                            replace_all(comment_value, "*/", "* /");
+                            result_builder.append(comment_value);
+                            result_builder.append("*/");
+                        }
+                        break;
+                    }
+                    // Not implemented
+                    default: {
+                        return nonstd::unexpected<std::string>("Token type not implemented");
+                    }
+                }
+
+                if (token.json_type != json_token_type::comment) {
+                    is_property_value = token.json_type == json_token_type::property_name;
+                }
             }
 
-            switch (token.json_type) {
-                // Null
-                case json_token_type::null: {
-                    result_builder.append("null");
-                    if (current_depth == 0) {
-                        return result_builder;
+            // End of input
+            return nonstd::unexpected<std::string>("Expected token, got end of input");
+        };
+
+        // Parse next element as JSON
+        nonstd::expected<std::string, std::string> next_element_as_json = parse_next_element_as_json();
+
+        // Ensure exactly one element
+        if (next_element_as_json) {
+            if (options.parse_single_element) {
+                for (const nonstd::expected<jsonh_token, std::string>& token : read_end_of_elements()) {
+                    if (!token) {
+                        return nonstd::unexpected<std::string>(token.error());
                     }
-                    break;
-                }
-                // True
-                case json_token_type::true_bool: {
-                    result_builder.append("true");
-                    if (current_depth == 0) {
-                        return result_builder;
-                    }
-                    break;
-                }
-                // False
-                case json_token_type::false_bool: {
-                    result_builder.append("false");
-                    if (current_depth == 0) {
-                        return result_builder;
-                    }
-                    break;
-                }
-                // String
-                case json_token_type::string: {
-                    result_builder.append(json(token.value).dump());
-                    if (current_depth == 0) {
-                        return result_builder;
-                    }
-                    break;
-                }
-                // Number
-                case json_token_type::number: {
-                    nonstd::expected<long double, std::string> result = jsonh_number_parser::parse(token.value);
-                    if (!result) {
-                        return nonstd::unexpected<std::string>(result.error());
-                    }
-                    result_builder.append(json(result.value()).dump());
-                    if (current_depth == 0) {
-                        return result_builder;
-                    }
-                    break;
-                }
-                // Start Object
-                case json_token_type::start_object: {
-                    result_builder.push_back('{');
-                    current_depth++;
-                    break;
-                }
-                // Start Array
-                case json_token_type::start_array: {
-                    result_builder.push_back('[');
-                    current_depth++;
-                    break;
-                }
-                // End Object
-                case json_token_type::end_object: {
-                    result_builder.push_back('}');
-                    current_depth--;
-                    if (current_depth == 0) {
-                        return result_builder;
-                    }
-                    break;
-                }
-                // End Array
-                case json_token_type::end_array: {
-                    result_builder.push_back(']');
-                    current_depth--;
-                    if (current_depth == 0) {
-                        return result_builder;
-                    }
-                    break;
-                }
-                // Property Name
-                case json_token_type::property_name: {
-                    result_builder.append(json(token.value).dump());
-                    result_builder.push_back(':');
-                    if (indent) {
-                        result_builder.push_back(' ');
-                    }
-                    break;
-                }
-                // Comment
-                case json_token_type::comment: {
-                    if (include_comments) {
-                        result_builder.append("/*");
-                        std::string comment_value = token.value;
-                        replace_all(comment_value, "/*", "/ *");
-                        replace_all(comment_value, "*/", "* /");
-                        result_builder.append(comment_value);
-                        result_builder.append("*/");
-                    }
-                    break;
-                }
-                // Not implemented
-                default: {
-                    return nonstd::unexpected<std::string>("Token type not implemented");
                 }
             }
-
-            is_property_value = token.json_type == json_token_type::property_name;
         }
 
-        // End of input
-        return nonstd::unexpected<std::string>("Expected token, got end of input");
+        return next_element_as_json;
     }
     /**
     * @brief Tries to find the given property name in the reader.
