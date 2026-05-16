@@ -37,6 +37,7 @@
 				var json:String = Jsonh.parse_json(jsonh).value
 				print(value) # ["hello","world"]
 				[/codeblock]
+				Note: The result is [b]NOT[/b] safe to embed in HTML. To safely embed in HTML, you need to escape characters like [code]&lt;[/code], [code]&gt;[/code] and [code]&amp;[/code].
 			</description>
 		</method>
 	</methods>
