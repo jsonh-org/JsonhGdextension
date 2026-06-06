@@ -1,6 +1,7 @@
 <img src="https://github.com/jsonh-org/Jsonh/blob/main/IconUpscaled.png?raw=true" width=180>
 
 [![Godot Asset Library](https://img.shields.io/github/v/release/jsonh-org/JsonhGdextension.svg?label=Godot%20Asset%20Library&logo=godotengine)](https://godotengine.org/asset-library/asset/3950)
+[![Godot Asset Store](https://img.shields.io/github/v/release/jsonh-org/JsonhGdextension.svg?label=Godot%20Asset%20Store&logo=godotengine)](https://store.godotengine.org/asset/joyless/jsonh)
 
 **JSON for Humans.**
 
