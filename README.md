@@ -53,6 +53,30 @@ var value:Variant = Jsonh.parse_element(jsonh).value
 print(value) # ["hello", "world"]
 ```
 
+## Supported Platforms
+
+JsonhGdextension aims to support every platform supported by the main Godot releases.
+
+Note: Every supported platform has binaries for single/double precision and debug/release mode.
+
+| Platform | Supported | Note |
+|---|---|---|
+| Windows x64 | ✅ | |
+| Windows x32 | ✅ | |
+| Windows ARM64 | ✅ | |
+| Linux x64 | ✅ | |
+| Linux x32 | ✅ | |
+| Linux ARM64 | ✅ | |
+| Linux ARM32 | ✅ | |
+| macOS Universal | ✅ | |
+| Android x64 | ✅ | |
+| Android x32 | ✅ | |
+| Android ARM64 | ✅ | |
+| Android ARM32 | ✅ | |
+| iOS ARM64 | ✅ | |
+| Web WASM32 | ✅ | |
+| Web WASM64 | ❌ | WASM64 support will be added when Godot 4.7-stable is released. |
+
 ## Dependencies
 
 - C++20
