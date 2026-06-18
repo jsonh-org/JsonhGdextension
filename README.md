@@ -75,7 +75,7 @@ Note: Every supported platform has binaries for single/double precision and debu
 | Android ARM32 | ✅ | |
 | iOS ARM64 | ✅ | |
 | Web WASM32 | ✅ | |
-| Web WASM64 | ✅ | |
+| Web WASM64 | ❌ | WASM64 support will be added when Godot 4.7-stable is released. |
 
 ## Dependencies
 
