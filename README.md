@@ -1,7 +1,7 @@
 <img src="https://github.com/jsonh-org/Jsonh/blob/main/IconUpscaled.png?raw=true" width=180>
 
-[![Godot Asset Library](https://img.shields.io/github/v/release/jsonh-org/JsonhGdextension.svg?label=Godot%20Asset%20Library&logo=godotengine)](https://godotengine.org/asset-library/asset/3950)
 [![Godot Asset Store](https://img.shields.io/github/v/release/jsonh-org/JsonhGdextension.svg?label=Godot%20Asset%20Store&logo=godotengine)](https://store.godotengine.org/asset/joyless/jsonh)
+[![Godot Asset Library](https://img.shields.io/github/v/release/jsonh-org/JsonhGdextension.svg?label=Godot%20Asset%20Library&logo=godotengine)](https://godotengine.org/asset-library/asset/3950)
 
 **JSON for Humans.**
 
@@ -11,6 +11,9 @@ JSONH provides a much more elegant way to write JSON that's designed for humans 
 Since JSONH is compatible with JSON, any JSONH syntax can be represented with equivalent JSON.
 
 ## JsonhGdextension
+
+> [!WARNING]  
+> This library is now deprecated. Please consider migrating to [JsonhGd](https://github.com/jsonh-org/JsonhGd) or [JsonhCs](https://github.com/jsonh-org/JsonhCs).
 
 JsonhGdextension is a parser implementation of [JSONH V1 & V2](https://github.com/jsonh-org/Jsonh) for GDExtension using [JsonhCpp](https://github.com/jsonh-org/JsonhCpp).
 
@@ -55,27 +58,26 @@ print(value) # ["hello", "world"]
 
 ## Supported Platforms
 
-JsonhGdextension aims to support every platform supported by the main Godot releases.
+JsonhGdextension has a baseline of Godot 4.4 and aims to support every platform supported by Godot 4.4.
 
 Note: Every supported platform has binaries for single/double precision and debug/release mode.
 
-| Platform | Supported | Note |
-|---|---|---|
-| Windows x64 | ✅ | |
-| Windows x32 | ✅ | |
-| Windows ARM64 | ✅ | |
-| Linux x64 | ✅ | |
-| Linux x32 | ✅ | |
-| Linux ARM64 | ✅ | |
-| Linux ARM32 | ✅ | |
-| macOS Universal | ✅ | |
-| Android x64 | ✅ | |
-| Android x32 | ✅ | |
-| Android ARM64 | ✅ | |
-| Android ARM32 | ✅ | |
-| iOS ARM64 | ✅ | |
-| Web WASM32 | ✅ | |
-| Web WASM64 | ❌ | WASM64 is not supported by Godot 4.4. |
+| Platform | Supported |
+|---|---|
+| Windows x64 | ✅ |
+| Windows x32 | ✅ |
+| Windows ARM64 | ✅ |
+| Linux x64 | ✅ |
+| Linux x32 | ✅ |
+| Linux ARM64 | ✅ |
+| Linux ARM32 | ✅ |
+| macOS Universal | ✅ |
+| Android x64 | ✅ |
+| Android x32 | ✅ |
+| Android ARM64 | ✅ |
+| Android ARM32 | ✅ |
+| iOS ARM64 | ✅ |
+| Web WASM32 | ✅ |
 
 ## Dependencies
 
