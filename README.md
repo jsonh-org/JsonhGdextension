@@ -13,7 +13,7 @@ Since JSONH is compatible with JSON, any JSONH syntax can be represented with eq
 ## JsonhGdextension
 
 > [!WARNING]  
-> This library is now deprecated. Please consider migrating to [JsonhGd](https://github.com/jsonh-org/JsonhGd) or [JsonhCs](https://github.com/jsonh-org/JsonhCs).
+> This addon is now deprecated. Please consider migrating to [JsonhGd](https://github.com/jsonh-org/JsonhGd) or [JsonhCs](https://github.com/jsonh-org/JsonhCs).
 
 JsonhGdextension is a parser implementation of [JSONH V1 & V2](https://github.com/jsonh-org/Jsonh) for GDExtension using [JsonhCpp](https://github.com/jsonh-org/JsonhCpp).
 
