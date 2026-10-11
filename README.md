@@ -83,7 +83,7 @@ Note: Every supported platform has binaries for single/double precision and debu
 
 - C++20
 - Godot 4.4+
-- [jsonh-org/JsonhCpp](https://github.com/jsonh-org/JsonhCpp) (v8.3)
+- [jsonh-org/JsonhCpp](https://github.com/jsonh-org/JsonhCpp) (v9.0)
 
 ## Limitations
 
